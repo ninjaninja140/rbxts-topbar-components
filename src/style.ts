@@ -1,9 +1,10 @@
-import { SoundService } from "@rbxts/services";
-import { DropdownProps } from "./components/dropdown";
-import { IconProps } from "./components/icon";
+import type { SpringOptions } from '@rbxts/ripple';
+import { SoundService } from '@rbxts/services';
+import type { DropdownProps } from './components/dropdown';
+import type { IconProps } from './components/icon';
 
 function defaultPlaySound(id: string) {
-	const sound = new Instance("Sound");
+	const sound = new Instance('Sound');
 	sound.SoundId = id;
 	sound.Parent = SoundService;
 
@@ -16,15 +17,76 @@ export function noop() {}
 export interface Stylesheet {
 	icon: Required<IconProps>;
 	dropdown: Required<DropdownProps>;
+
+	/**
+	 * Configure the top-level provider frame: padding, spacing, background, sizing.
+	 */
+	provider: {
+		paddingLeft: number;
+		paddingRight: number;
+		paddingTop: number;
+		paddingBottom: number;
+		iconSpacing: number;
+		backgroundTransparency: number;
+		backgroundColor: Color3;
+		anchorPoint: Vector2;
+		position: UDim2;
+		sizeScale: Vector2;
+		/** Offset subtracted from the gui inset height */
+		insetHeightOffset: number;
+	};
+
+	/**
+	 * Fine-grained sizing & layout overrides for icon internals.
+	 */
+	sizing: {
+		/**
+		 * Explicit icon height override.
+		 * When defined, this replaces the automatic `forceHeight ?? inset.Height - 12` calculation.
+		 */
+		iconHeight: number | undefined;
+		/** Padding between the icon edge and the image (default 6) */
+		imagePadding: number;
+		/** Padding between the icon edge and the text label (default 6) */
+		labelPadding: number;
+		/** Gap between the image and the text label (default 6) */
+		imageToTextSpacing: number;
+		/** Max width passed to GetTextBoundsParams (default 99999) */
+		textMeasurementWidth: number;
+		/** Extra padding subtracted from the min label width inside a dropdown (default 12) */
+		minLabelWidthPadding: number;
+		/** Fraction of icon height used for the text button label size (default 0.8) */
+		buttonLabelHeightFraction: number;
+	};
+
+	/**
+	 * Visual theming for the dropdown surface (background, border, position).
+	 */
+	dropdownTheme: {
+		backgroundColor: Color3;
+		backgroundTransparency: number;
+		cornerRadius: UDim;
+		borderSize: number;
+		borderColor: Color3;
+		borderTransparency: number;
+		/** Position of the dropdown relative to its parent icon (default (0, 1)) */
+		position: UDim2;
+	};
+
+	/**
+	 * Global animation configuration.
+	 */
+	animation: {
+		/** Speed value used by the dropdown transition motion (default 10) */
+		dropdownTransitionSpeed: number;
+		/** Spring options for icon state transitions (color, transparency, etc.) */
+		stateSpring: SpringOptions;
+	};
 }
 
 export const DefaultStylesheet: Stylesheet = {
 	icon: {
-		fontFace: new Font(
-			"rbxasset://fonts/families/GothamSSm.json",
-			Enum.FontWeight.Medium,
-			Enum.FontStyle.Normal,
-		),
+		fontFace: new Font('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Medium, Enum.FontStyle.Normal),
 		strokeColor: Color3.fromRGB(0, 0, 0),
 		strokeThickness: 0,
 		strokeTransparency: 0,
@@ -48,15 +110,15 @@ export const DefaultStylesheet: Stylesheet = {
 		imageSizeOffset: -4,
 		imageRectOffset: Vector2.zero,
 		imageRectSize: Vector2.zero,
-		leftClickSound: "",
-		rightClickSound: "",
+		leftClickSound: '',
+		rightClickSound: '',
 		playSound: defaultPlaySound,
-		imageId: "",
+		imageId: '',
 		imageTransparency: 0,
 		layoutOrder: 0,
-		text: "",
-		defaultState: "deselected",
-		forcedState: "deselected",
+		text: '',
+		defaultState: 'deselected',
+		forcedState: 'deselected',
 		toggleStateOnClick: true,
 		selected: noop,
 		deselected: noop,
@@ -74,13 +136,48 @@ export const DefaultStylesheet: Stylesheet = {
 		padding: new UDim(0, 2.5),
 		forceHeight: 32,
 		iconCornerRadius: new UDim(0, 0),
-		selectionMode: "Multiple",
+		selectionMode: 'Multiple',
 		children: [],
 		scrollBarThickness: 5,
 		scrollBarTransparency: 0,
 		scrollBarImageColor: new Color3(1, 1, 1),
-		midImage: "rbxasset://textures/ui/Scroll/scroll-middle.png",
-		topImage: "rbxasset://textures/ui/Scroll/scroll-top.png",
-		bottomImage: "rbxasset://textures/ui/Scroll/scroll-bottom.png",
+		midImage: 'rbxasset://textures/ui/Scroll/scroll-middle.png',
+		topImage: 'rbxasset://textures/ui/Scroll/scroll-top.png',
+		bottomImage: 'rbxasset://textures/ui/Scroll/scroll-bottom.png',
+	},
+	provider: {
+		paddingLeft: 8,
+		paddingRight: 12,
+		paddingTop: 11,
+		paddingBottom: 0,
+		iconSpacing: 12,
+		backgroundTransparency: 1,
+		backgroundColor: new Color3(0, 0, 0),
+		anchorPoint: new Vector2(1, 0),
+		position: UDim2.fromScale(1, 0),
+		sizeScale: new Vector2(1, 1),
+		insetHeightOffset: 0,
+	},
+	sizing: {
+		iconHeight: undefined,
+		imagePadding: 6,
+		labelPadding: 6,
+		imageToTextSpacing: 6,
+		textMeasurementWidth: 99999,
+		minLabelWidthPadding: 12,
+		buttonLabelHeightFraction: 0.8,
+	},
+	dropdownTheme: {
+		backgroundColor: new Color3(1, 1, 1),
+		backgroundTransparency: 0,
+		cornerRadius: new UDim(0, 0),
+		borderSize: 0,
+		borderColor: new Color3(0, 0, 0),
+		borderTransparency: 1,
+		position: UDim2.fromScale(0, 1),
+	},
+	animation: {
+		dropdownTransitionSpeed: 10,
+		stateSpring: { tension: 400 },
 	},
 };

@@ -1,20 +1,20 @@
-import { deepEquals } from "@rbxts/object-utils";
+import { deepEquals } from '@rbxts/object-utils';
 import {
 	mapBinding,
 	useAsyncEffect,
 	useMountEffect,
 	useUnmountEffect,
 	useUpdateEffect,
-} from "@rbxts/pretty-react-hooks";
-import React, { useBinding, useEffect, useRef, useState } from "@rbxts/react";
-import { MotionGoal } from "@rbxts/ripple";
-import { TextService } from "@rbxts/services";
-import { LocationContext, useLocation, useStylesheet } from "../context";
-import { useAnimateableProps } from "../hooks/use-animateable-props";
-import { useGuiInset } from "../hooks/use-gui-inset";
-import { useId } from "../hooks/use-id";
-import { noop } from "../style";
-import { stateful } from "../utilities/resolve-state-dependent";
+} from '@rbxts/pretty-react-hooks';
+import React, { useBinding, useEffect, useRef, useState } from '@rbxts/react';
+import type { MotionGoal } from '@rbxts/ripple';
+import { TextService } from '@rbxts/services';
+import { LocationContext, useLocation, useStylesheet } from '../context';
+import { useAnimateableProps } from '../hooks/use-animateable-props';
+import { useGuiInset } from '../hooks/use-gui-inset';
+import { useId } from '../hooks/use-id';
+import { noop } from '../style';
+import { stateful } from '../utilities/resolve-state-dependent';
 
 export interface IconProps extends React.PropsWithChildren {
 	backgroundTransparency?: StateDependent<number>;
@@ -53,14 +53,9 @@ export interface IconProps extends React.PropsWithChildren {
 
 type ValidKeys = ExtractKeys<Required<IconProps>, StateDependent<MotionGoal>>;
 
-const ANIMATEABLE = [
-	"backgroundColor",
-	"backgroundTransparency",
-	"imageColor",
-	"imageTransparency",
-] as const;
+const ANIMATEABLE = ['backgroundColor', 'backgroundTransparency', 'imageColor', 'imageTransparency'] as const;
 
-export type IconState = "selected" | "deselected";
+export type IconState = 'selected' | 'deselected';
 export type StateDependent<T> = Record<IconState, T> | T;
 export type FromStateDependent<T> = T extends StateDependent<infer U> ? U : T;
 export type IconId = number;
@@ -70,9 +65,7 @@ export function Icon({ children, ...componentProps }: IconProps) {
 	const location = useLocation();
 	const id = useId();
 
-	const [currentState, setState] = useState<IconState>(
-		componentProps.forcedState ?? "deselected",
-	);
+	const [currentState, setState] = useState<IconState>(componentProps.forcedState ?? 'deselected');
 
 	const [dropdownAnimating, setAnimationState] = useState(false);
 	const [contentSize, setContentSize] = useState(new Vector2(0, 0));
@@ -81,14 +74,12 @@ export function Icon({ children, ...componentProps }: IconProps) {
 	const [textBounds, setTextBounds] = useState(Vector2.zero);
 	const stylesheet = useStylesheet();
 
-	assert(location.type !== "icon", "Icons cannot be nested");
+	assert(location.type !== 'icon', 'Icons cannot be nested');
 
 	const animatedProps = useAnimateableProps(
 		currentState,
-		{ ...stylesheet.icon, ...componentProps } as Required<
-			Pick<IconProps, ValidKeys>
-		>,
-		...ANIMATEABLE,
+		{ ...stylesheet.icon, ...componentProps } as Required<Pick<IconProps, ValidKeys>>,
+		...ANIMATEABLE
 	);
 
 	const props = {
@@ -98,9 +89,7 @@ export function Icon({ children, ...componentProps }: IconProps) {
 	};
 
 	useMountEffect(() => {
-		props.defaultState &&
-			!componentProps.forcedState &&
-			setState(props.defaultState);
+		props.defaultState && !componentProps.forcedState && setState(props.defaultState);
 	});
 
 	useEffect(() => {
@@ -110,7 +99,7 @@ export function Icon({ children, ...componentProps }: IconProps) {
 
 	useUpdateEffect(() => {
 		props.stateChanged(currentState);
-		if (currentState === "selected") {
+		if (currentState === 'selected') {
 			location.iconSelected(id);
 			props.selected();
 		} else {
@@ -120,8 +109,8 @@ export function Icon({ children, ...componentProps }: IconProps) {
 	}, [currentState]);
 
 	useUpdateEffect(() => {
-		if (currentState === "selected" && !location.selectedIcons.includes(id)) {
-			setState("deselected");
+		if (currentState === 'selected' && !location.selectedIcons.includes(id)) {
+			setState('deselected');
 		}
 	}, [location.selectedIcons]);
 
@@ -138,79 +127,70 @@ export function Icon({ children, ...componentProps }: IconProps) {
 		if (deepEquals(currentQuery, previousQueryRef.current ?? {})) return;
 		if (!currentText) return setTextBounds(Vector2.zero);
 
-		const params = new Instance("GetTextBoundsParams");
+		const params = new Instance('GetTextBoundsParams');
 		params.Text = currentText;
 		params.Font = stateful(props.fontFace, currentState);
 		params.Size = stateful(props.textSize, currentState);
-		params.Width = 99999;
+		params.Width = stylesheet.sizing.textMeasurementWidth;
 
 		setTextBounds(TextService.GetTextBoundsAsync(params));
 		previousQueryRef.current = currentQuery;
 	}, [currentText, props.fontFace, props.textSize, currentState]);
 
 	const imageSizeOff = stateful(props.imageSizeOffset, currentState);
-	const forceHeight =
-		location.type === "dropdown" ? stylesheet.dropdown.forceHeight : undefined;
-	const iconHeight = forceHeight ?? inset.Height - 12;
-	const imageSize = iconHeight - 6 * 2 + imageSizeOff;
+	const forceHeight = location.type === 'dropdown' ? stylesheet.dropdown.forceHeight : undefined;
+	const iconHeight = stylesheet.sizing.iconHeight ?? forceHeight ?? inset.Height - 12;
+	const imageSize = iconHeight - stylesheet.sizing.imagePadding * 2 + imageSizeOff;
 
 	const minLabelWidth =
-		location.type === "dropdown"
-			? location.desiredIconWidth - 12
-			: inset.Height - 6 * 2;
-	const accumulatedLabelWidth = currentImage
-		? textBounds.X
-		: math.max(textBounds.X, minLabelWidth);
+		location.type === 'dropdown'
+			? location.desiredIconWidth - stylesheet.sizing.minLabelWidthPadding
+			: inset.Height - stylesheet.sizing.labelPadding * 2;
+	const accumulatedLabelWidth = currentImage ? textBounds.X : math.max(textBounds.X, minLabelWidth);
 
 	const iconSize = new Vector2(
 		math.max(
 			iconHeight,
 			textBounds.X +
-				6 * 2 +
-				(currentImage && textBounds.X !== 0 ? imageSize + 6 : 0),
+				stylesheet.sizing.labelPadding * 2 +
+				(currentImage && textBounds.X !== 0 ? imageSize + stylesheet.sizing.imageToTextSpacing : 0)
 		),
-		iconHeight,
+		iconHeight
 	);
-	const imagePos = 6 + imageSizeOff * -0.5;
+	const imagePos = stylesheet.sizing.imagePadding + imageSizeOff * -0.5;
 
 	const textLabelPos = new UDim2(
 		0,
-		currentImage ? imageSize + 6 * 2 : 6,
+		currentImage ? imageSize + stylesheet.sizing.imagePadding * 2 : stylesheet.sizing.labelPadding,
 		0.5,
-		0,
+		0
 	);
 
 	useEffect(() => {
-		if (location.type !== "dropdown") return;
-		const includeContents = currentState === "selected" || dropdownAnimating;
+		if (location.type !== 'dropdown') return;
+		const includeContents = currentState === 'selected' || dropdownAnimating;
 		location.registerChild(
 			id,
-			new Vector2(iconSize.X, iconSize.Y).add(
-				new Vector2(0, includeContents ? contentSize.Y : 0),
-			),
+			new Vector2(iconSize.X, iconSize.Y).add(new Vector2(0, includeContents ? contentSize.Y : 0))
 		);
 	}, [currentState, contentSize.Y, dropdownAnimating, iconSize]);
 
 	useUnmountEffect(() => {
-		if (location.type !== "dropdown") return;
+		if (location.type !== 'dropdown') return;
 		location.removeChild(id);
 	});
 
 	const wrapSize = mapBinding(dropdownSize, (t) =>
-		UDim2.fromOffset(
-			location.type === "dropdown" ? location.desiredIconWidth : iconSize.X,
-			iconSize.Y + t.Y,
-		),
+		UDim2.fromOffset(location.type === 'dropdown' ? location.desiredIconWidth : iconSize.X, iconSize.Y + t.Y)
 	);
 
 	return (
 		<LocationContext.Provider
 			value={{
-				type: "icon",
-				isVisible: currentState === "selected",
-				isUnderDropdown: location.type === "dropdown",
-				width:
-					location.type === "dropdown" ? location.desiredIconWidth : iconSize.X,
+				type: 'icon',
+				isVisible: currentState === 'selected',
+				isUnderDropdown: location.type === 'dropdown',
+				width: location.type === 'dropdown' ? location.desiredIconWidth : iconSize.X,
 				setDropdownSize,
 				setContentSize,
 				setAnimationState,
@@ -220,16 +200,14 @@ export function Icon({ children, ...componentProps }: IconProps) {
 				Size={wrapSize}
 				LayoutOrder={stateful(props.layoutOrder, currentState)}
 				BackgroundTransparency={1}
-				key={"IconWrapper"}
+				key={'IconWrapper'}
 			>
 				<textbutton
 					Size={new UDim2(1, 0, 0, iconSize.Y)}
 					Event={{
 						MouseButton1Click: () => {
 							if (stateful(props.toggleStateOnClick, currentState)) {
-								setState(
-									currentState === "deselected" ? "selected" : "deselected",
-								);
+								setState(currentState === 'deselected' ? 'selected' : 'deselected');
 							}
 							props.onClick();
 
@@ -248,15 +226,15 @@ export function Icon({ children, ...componentProps }: IconProps) {
 						MouseEnter: props.hover,
 						MouseLeave: props.unhover,
 					}}
-					Text={""}
+					Text={''}
 					BackgroundTransparency={props.backgroundTransparency}
 					BackgroundColor3={stateful(props.backgroundColor, currentState)}
-					key={"IconButton"}
+					key={'IconButton'}
 				>
 					{children}
-					{currentImage !== undefined && currentImage !== "" && (
+					{currentImage !== undefined && currentImage !== '' && (
 						<imagelabel
-							key={"IconImage"}
+							key={'IconImage'}
 							Size={UDim2.fromOffset(imageSize, imageSize)}
 							Position={UDim2.fromOffset(imagePos, imagePos)}
 							Image={currentImage}
@@ -267,23 +245,23 @@ export function Icon({ children, ...componentProps }: IconProps) {
 							ImageRectSize={stateful(props.imageRectSize, currentState)}
 						/>
 					)}
-					{currentText !== undefined && currentText !== "" && (
+					{currentText !== undefined && currentText !== '' && (
 						<textlabel
 							FontFace={stateful(props.fontFace, currentState)}
 							TextSize={stateful(props.textSize, currentState)}
 							TextColor3={stateful(props.textColor, currentState)}
 							TextWrapped={false}
 							AnchorPoint={new Vector2(0, 0.5)}
-							Size={new UDim2(0, accumulatedLabelWidth, 0.8, 0)}
+							Size={new UDim2(0, accumulatedLabelWidth, stylesheet.sizing.buttonLabelHeightFraction, 0)}
 							Position={textLabelPos}
 							TextXAlignment={stateful(props.textAlignment, currentState)}
 							RichText={stateful(props.richText, currentState)}
 							BackgroundTransparency={1}
 							Text={currentText}
-							key={"IconText"}
+							key={'IconText'}
 						>
 							<uistroke
-								key={"UIStroke"}
+								key={'UIStroke'}
 								Thickness={stateful(props.strokeThickness, currentState)}
 								Color={stateful(props.strokeColor, currentState)}
 								Transparency={stateful(props.strokeTransparency, currentState)}
@@ -291,9 +269,9 @@ export function Icon({ children, ...componentProps }: IconProps) {
 						</textlabel>
 					)}
 					<uicorner
-						key={"UICorner"}
+						key={'UICorner'}
 						CornerRadius={
-							location.type === "dropdown"
+							location.type === 'dropdown'
 								? stylesheet.dropdown.iconCornerRadius
 								: stateful(props.cornerRadius, currentState)
 						}

@@ -1,16 +1,16 @@
-import { createContext, useContext } from "@rbxts/react";
-import { IconId } from "./components/icon";
-import { DefaultStylesheet, Stylesheet } from "./style";
+import { createContext, useContext } from '@rbxts/react';
+import type { IconId } from './components/icon';
+import { DefaultStylesheet, type Stylesheet } from './style';
 
 type Location =
 	| {
-			type: "provider";
+			type: 'provider';
 			selectedIcons: IconId[];
 			iconSelected: (icon: IconId) => void;
 			iconDeselected: (icon: IconId) => void;
 	  }
 	| {
-			type: "icon";
+			type: 'icon';
 			isVisible: boolean;
 			isUnderDropdown: boolean;
 			width: number;
@@ -19,7 +19,7 @@ type Location =
 			setContentSize: (current: Vector2) => void;
 	  }
 	| {
-			type: "dropdown";
+			type: 'dropdown';
 			selectedIcons: IconId[];
 			iconSelected: (icon: IconId) => void;
 			iconDeselected: (icon: IconId) => void;

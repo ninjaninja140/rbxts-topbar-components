@@ -1,12 +1,8 @@
-import {
-	mapBinding,
-	useMotion,
-	useMountEffect,
-} from "@rbxts/pretty-react-hooks";
-import React, { useEffect, useMemo, useState } from "@rbxts/react";
-import { LocationContext, useLocation, useStylesheet } from "../context";
-import { IconId } from "./icon";
-import { SelectionMode } from "./provider";
+import { mapBinding, useMotion, useMountEffect } from '@rbxts/pretty-react-hooks';
+import React, { useEffect, useMemo, useState } from '@rbxts/react';
+import { LocationContext, useLocation, useStylesheet } from '../context';
+import type { IconId } from './icon';
+import type { SelectionMode } from './provider';
 
 export interface DropdownProps extends React.PropsWithChildren {
 	minWidth?: number;
@@ -26,11 +22,12 @@ export interface DropdownProps extends React.PropsWithChildren {
 
 export function Dropdown(componentProps: DropdownProps) {
 	const location = useLocation();
-	const stylesheet = useStylesheet().dropdown;
+	const fullStylesheet = useStylesheet();
+	const stylesheet = fullStylesheet.dropdown;
 	const [selectedIcons, setSelectedIcons] = useState<IconId[]>([]);
 	const [contents, setContents] = useState(new Map<number, Vector2>());
 
-	assert(location.type === "icon", "Dropdowns can only be located under icons");
+	assert(location.type === 'icon', 'Dropdowns can only be located under icons');
 	const [transition, transitionMotion] = useMotion(location.isVisible ? 1 : 0);
 
 	const props = { ...stylesheet, ...componentProps };
@@ -52,12 +49,12 @@ export function Dropdown(componentProps: DropdownProps) {
 
 	useEffect(() => {
 		location.setAnimationState(true);
-		transitionMotion.linear(location.isVisible ? 1 : 0, { speed: 10 });
+		transitionMotion.linear(location.isVisible ? 1 : 0, {
+			speed: fullStylesheet.animation.dropdownTransitionSpeed,
+		});
 	}, [location.isVisible]);
 
-	useMountEffect(() =>
-		transitionMotion.onComplete(() => location.setAnimationState(false)),
-	);
+	useMountEffect(() => transitionMotion.onComplete(() => location.setAnimationState(false)));
 
 	useEffect(() => {
 		location.setContentSize(contentSize);
@@ -67,19 +64,16 @@ export function Dropdown(componentProps: DropdownProps) {
 	return (
 		<LocationContext.Provider
 			value={{
-				type: "dropdown",
+				type: 'dropdown',
 				selectedIcons: selectedIcons,
 				iconSelected: (iconId) => {
-					if (props.selectionMode === "Single") {
+					if (props.selectionMode === 'Single') {
 						return setSelectedIcons([iconId]);
 					}
 					return setSelectedIcons((icons) => [...icons, iconId]);
 				},
 				iconDeselected: (iconId) => {
-					if (
-						props.selectionMode === "Single" &&
-						selectedIcons.includes(iconId)
-					) {
+					if (props.selectionMode === 'Single' && selectedIcons.includes(iconId)) {
 						return setSelectedIcons([]);
 					}
 					return setSelectedIcons((icons) => icons.filter((T) => T !== iconId));
@@ -88,9 +82,7 @@ export function Dropdown(componentProps: DropdownProps) {
 					setContents((contents) => new Map([...contents, [id, size]]));
 				},
 				removeChild: (id) => {
-					setContents(
-						(contents) => new Map([...contents].filter((T) => T[0] !== id)),
-					);
+					setContents((contents) => new Map([...contents].filter((T) => T[0] !== id)));
 				},
 				desiredIconWidth: isNested ? location.width : contentSize.X,
 			}}
@@ -100,36 +92,39 @@ export function Dropdown(componentProps: DropdownProps) {
 				Size={mapBinding(transition, (t) =>
 					UDim2.fromOffset(
 						contentSize.X + (scrollingEnabled ? props.scrollBarThickness : 0),
-						t * math.min(contentSize.Y, isNested ? contentSize.Y : maxHeight),
-					),
+						t * math.min(contentSize.Y, isNested ? contentSize.Y : maxHeight)
+					)
 				)}
-				BorderSizePixel={0}
-				Position={UDim2.fromScale(0, 1)}
+				BorderSizePixel={fullStylesheet.dropdownTheme.borderSize}
+				BorderColor3={fullStylesheet.dropdownTheme.borderColor}
+				BackgroundColor3={fullStylesheet.dropdownTheme.backgroundColor}
+				Position={fullStylesheet.dropdownTheme.position}
 				ScrollBarImageColor3={props.scrollBarImageColor}
-				ScrollBarImageTransparency={
-					scrollingEnabled && location.isVisible
-						? props.scrollBarTransparency
-						: 1
-				}
+				ScrollBarImageTransparency={scrollingEnabled && location.isVisible ? props.scrollBarTransparency : 1}
 				ScrollingEnabled={scrollingEnabled}
 				AutomaticCanvasSize={Enum.AutomaticSize.None}
 				CanvasSize={UDim2.fromOffset(0, contentSize.Y)}
 				ScrollBarThickness={scrollingEnabled ? props.scrollBarThickness : 0}
-				BackgroundTransparency={1}
+				BackgroundTransparency={fullStylesheet.dropdownTheme.backgroundTransparency}
 				Change={{
 					AbsoluteSize: (rbx) => location.setDropdownSize(rbx.AbsoluteSize),
 				}}
 				MidImage={props.midImage}
 				TopImage={props.topImage}
 				BottomImage={props.bottomImage}
-				key={"Dropdown"}
+				key={'Dropdown'}
 			>
+				<uicorner key={'DropdownCorner'} CornerRadius={fullStylesheet.dropdownTheme.cornerRadius} />
+				<uistroke
+					key={'DropdownStroke'}
+					Thickness={fullStylesheet.dropdownTheme.borderSize}
+					Color={fullStylesheet.dropdownTheme.borderColor}
+					Transparency={fullStylesheet.dropdownTheme.borderTransparency}
+				/>
 				{props.children}
-				{isNested && (
-					<uipadding key={"UIPadding"} PaddingTop={stylesheet.padding} />
-				)}
+				{isNested && <uipadding key={'UIPadding'} PaddingTop={stylesheet.padding} />}
 				<uilistlayout
-					key={"UIListLayout"}
+					key={'UIListLayout'}
 					SortOrder={Enum.SortOrder.LayoutOrder}
 					Padding={stylesheet.padding}
 				/>

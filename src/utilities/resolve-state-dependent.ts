@@ -1,10 +1,7 @@
-import { t } from "@rbxts/t";
-import { IconState, StateDependent } from "../components/icon";
+import { t } from '@rbxts/t';
+import type { IconState, StateDependent } from '../components/icon';
 
-const state_check: t.check<IconState> = t.union(
-	t.literal("selected"),
-	t.literal("deselected"),
-);
+const state_check: t.check<IconState> = t.union(t.literal('selected'), t.literal('deselected'));
 const object_check: t.check<Record<IconState, any>> = t.interface({
 	selected: t.any,
 	deselected: t.any,
