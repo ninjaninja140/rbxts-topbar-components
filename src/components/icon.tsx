@@ -66,6 +66,7 @@ export type IconId = number;
 
 export function Icon(componentProps: IconProps) {
 	const { children } = componentProps;
+	const style = (componentProps as Record<string, unknown>).style as Partial<IconProps> | undefined;
 	const inset = useGuiInset();
 	const location = useLocation();
 	const id = useId();
@@ -81,15 +82,16 @@ export function Icon(componentProps: IconProps) {
 
 	assert(location.type !== 'icon', 'Icons cannot be nested');
 
+	const merged = { ...stylesheet.icon, ...(style ?? {}), ...componentProps };
+
 	const animatedProps = useAnimateableProps(
 		currentState,
-		{ ...stylesheet.icon, ...componentProps } as Required<Pick<IconProps, ValidKeys>>,
+		merged as Required<Pick<IconProps, ValidKeys>>,
 		...ANIMATEABLE
 	);
 
 	const props = {
-		...stylesheet.icon,
-		...componentProps,
+		...merged,
 		...animatedProps,
 	};
 
