@@ -49,28 +49,60 @@ And this to your `tsconfig.json`
 
 Instantiate `<TopbarProvider />` to be a root of your topbar component tree.
 
-```jsx
+```tsx
 <TopbarProvider>
     <Icon text="Hello, World!" />
 </TopbarProvider>
 ```
 
-Every `<Icon />` can be in only two states `selected`, and `deselected`.
-You can conditionally apply properties based on icon's current state, by providing a state markup object:
+#### 📍 Positioning icons with dock containers
 
-```jsx
-<Icon text={{
-    selected: "Selected!",
-    deselected: "Deselected!",
-}} />
+Icons placed directly inside `<TopbarProvider>` default to the left side. Use the dock container components to position icons at the center or right of the bar:
+
+```tsx
+<TopbarProvider>
+    <LeftDock>
+        <Icon text="Home" />
+        <Icon text="Settings" />
+    </LeftDock>
+    <CenterDock>
+        <Icon text="Server Time" static />
+    </CenterDock>
+    <RightDock>
+        <Icon text="Profile" imageId="rbxassetid://..." />
+    </RightDock>
+</TopbarProvider>
 ```
 
-You can add a dropdown to an icon by mounting `<Dropdown />` component as it's child:
+| Container | Anchor | Purpose |
+|---|---|---|
+| `<LeftDock>` | left edge | Default — icons flow left-to-right from the left |
+| `<CenterDock>` | center (50%) | Centers icons in the bar |
+| `<RightDock>` | right edge | Right-aligns icons |
+
+Each dock container renders its own horizontal list with the configured `iconSpacing` and vertical centering. Center and right docks automatically apply `iconGroupSpacing` for visual separation.
+
+#### 🏷️ Icon props: `static` and `disabled`
+
+- **`static`** — turns the icon into a non-interactive label (no clicks, no hovers, no state toggling, no sounds)
+- **`disabled`** — dims the icon with a configurable semi-transparent overlay
+
+```tsx
+<Icon text="Read Only" static />       {/* label, not clickable */}
+<Icon text="Locked" disabled />         {/* dimmed */}
+<Icon text="Both" static disabled />    {/* dimmed label */}
+```
+
+The disabled overlay transparency and color are configurable via the stylesheet `sizing` section.
+
+#### 🔽 Dropdowns
+
+You can add a dropdown to an icon by mounting `<Dropdown />` component as it's child.
 Dropdowns & TopbarProvider have a property called `selectionMode`, which lets you specify how many icons can be selected at once.
 
-```jsx
+```tsx
 <Icon text="Skins">
-    <Dropdown selectionMode="single">
+    <Dropdown selectionMode="Single">
         <Icon text="yellow" selected={() => chooseSkin("yellow")} />
         <Icon text="red" selected={() => chooseSkin("red")} />
     </Dropdown>
@@ -81,22 +113,104 @@ Dropdowns **can be nested.**
 
 ### 🎨 Stylesheets
 
-You can use stylesheets to override default properties of all components within:
+You can use stylesheets to override default properties of all components within.
 Stylesheets are partial, and work like patches to already established default properties within the package:
 
-```jsx
+```tsx
+import { Stylesheet } from "@nrbx/topbar-components";
+
 <Stylesheet stylesheet={{
     icon: {
         textSize: 25,
         cornerRadius: new UDim(0.5, 0),
-    }
+    },
 }}>
-    <Icon text="Skins">
-        <Dropdown selectionMode="single">
-            <Icon text="yellow" selected={() => chooseSkin("yellow")} />
-            <Icon text="red" selected={() => chooseSkin("red")} />
-        </Dropdown>
-    </Icon>
+    <TopbarProvider>
+        <LeftDock>
+            <Icon text="Skins">
+                <Dropdown selectionMode="Single">
+                    <Icon text="yellow" selected={() => chooseSkin("yellow")} />
+                    <Icon text="red" selected={() => chooseSkin("red")} />
+                </Dropdown>
+            </Icon>
+        </LeftDock>
+    </TopbarProvider>
+</Stylesheet>
+```
+
+#### Complete stylesheet shape
+
+The stylesheet exposes the following sections for full control:
+
+```tsx
+<Stylesheet stylesheet={{
+    // ── Icon defaults (all IconProps) ──
+    icon: {
+        textSize: 20,
+        textColor: { selected: Color3.fromRGB(57, 60, 65), deselected: Color3.fromRGB(255, 255, 255) },
+        backgroundColor: { selected: Color3.fromRGB(245, 245, 245), deselected: Color3.fromRGB(0, 0, 0) },
+        backgroundTransparency: 0.3,
+        cornerRadius: new UDim(1, 0),
+        fontFace: new Font("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+        static: false,
+        disabled: false,
+        // ... all other IconProps
+    },
+
+    // ── Dropdown defaults (all DropdownProps) ──
+    dropdown: {
+        maxWidth: 300,
+        minWidth: 200,
+        maxHeight: 200,
+        forceHeight: 32,
+        padding: new UDim(0, 2.5),
+        selectionMode: "Multiple",
+        // ... all other DropdownProps
+    },
+
+    // ── Provider frame ──
+    provider: {
+        paddingLeft: 8,           paddingRight: 12,
+        paddingTop: 11,           paddingBottom: 0,
+        iconSpacing: 12,          iconGroupSpacing: 0,
+        backgroundTransparency: 1,
+        anchorPoint: new Vector2(1, 0),
+        position: UDim2.fromScale(1, 0),
+        sizeScale: new Vector2(1, 1),
+        insetHeightOffset: 0,
+        forceFrameHeight: undefined,  // override auto height (e.g. 55)
+    },
+
+    // ── Icon internal sizing ──
+    sizing: {
+        iconHeight: undefined,    // explicit override
+        imagePadding: 6,
+        labelPadding: 6,
+        imageToTextSpacing: 6,
+        textMeasurementWidth: 99999,
+        minLabelWidthPadding: 12,
+        buttonLabelHeightFraction: 0.8,
+        disabledOverlayTransparency: 0.55,
+        disabledOverlayColor: new Color3(0, 0, 0),
+    },
+
+    // ── Dropdown surface theme ──
+    dropdownTheme: {
+        backgroundColor: new Color3(1, 1, 1),
+        backgroundTransparency: 0,
+        cornerRadius: new UDim(0, 0),
+        borderSize: 0,            borderColor: new Color3(0, 0, 0),
+        borderTransparency: 1,
+        position: UDim2.fromScale(0, 1),
+    },
+
+    // ── Animation ──
+    animation: {
+        dropdownTransitionSpeed: 10,
+        stateSpring: { tension: 400 },
+    },
+}}>
+    {/* children */}
 </Stylesheet>
 ```
 

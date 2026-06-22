@@ -41,6 +41,10 @@ export interface IconProps extends React.PropsWithChildren {
 	textAlignment?: StateDependent<Enum.TextXAlignment>;
 	richText?: StateDependent<boolean>;
 	toggleStateOnClick?: boolean;
+	/** When true, renders as a non-interactive label (no clicks, no hovers, no state changes) */
+	static?: boolean;
+	/** When true, dulls the text and icon with a dimming overlay */
+	disabled?: boolean;
 	selected?: () => void;
 	deselected?: () => void;
 	hover?: () => void;
@@ -60,7 +64,8 @@ export type StateDependent<T> = Record<IconState, T> | T;
 export type FromStateDependent<T> = T extends StateDependent<infer U> ? U : T;
 export type IconId = number;
 
-export function Icon({ children, ...componentProps }: IconProps) {
+export function Icon(componentProps: IconProps) {
+	const { children } = componentProps;
 	const inset = useGuiInset();
 	const location = useLocation();
 	const id = useId();
@@ -89,15 +94,18 @@ export function Icon({ children, ...componentProps }: IconProps) {
 	};
 
 	useMountEffect(() => {
+		if (props.static) return;
 		props.defaultState && !componentProps.forcedState && setState(props.defaultState);
 	});
 
 	useEffect(() => {
+		if (props.static) return;
 		if (!componentProps.forcedState) return;
 		setState(componentProps.forcedState);
 	}, [componentProps.forcedState]);
 
 	useUpdateEffect(() => {
+		if (props.static) return;
 		props.stateChanged(currentState);
 		if (currentState === 'selected') {
 			location.iconSelected(id);
@@ -109,6 +117,7 @@ export function Icon({ children, ...componentProps }: IconProps) {
 	}, [currentState]);
 
 	useUpdateEffect(() => {
+		if (props.static) return;
 		if (currentState === 'selected' && !location.selectedIcons.includes(id)) {
 			setState('deselected');
 		}
@@ -167,6 +176,7 @@ export function Icon({ children, ...componentProps }: IconProps) {
 	);
 
 	useEffect(() => {
+		if (props.static) return;
 		if (location.type !== 'dropdown') return;
 		const includeContents = currentState === 'selected' || dropdownAnimating;
 		location.registerChild(
@@ -176,6 +186,7 @@ export function Icon({ children, ...componentProps }: IconProps) {
 	}, [currentState, contentSize.Y, dropdownAnimating, iconSize]);
 
 	useUnmountEffect(() => {
+		if (props.static) return;
 		if (location.type !== 'dropdown') return;
 		location.removeChild(id);
 	});
@@ -204,8 +215,11 @@ export function Icon({ children, ...componentProps }: IconProps) {
 			>
 				<textbutton
 					Size={new UDim2(1, 0, 0, iconSize.Y)}
+					Active={!props.static}
+					Selectable={!props.static}
 					Event={{
 						MouseButton1Click: () => {
+							if (props.static) return;
 							if (stateful(props.toggleStateOnClick, currentState)) {
 								setState(currentState === 'deselected' ? 'selected' : 'deselected');
 							}
@@ -216,6 +230,7 @@ export function Icon({ children, ...componentProps }: IconProps) {
 							props.playSound(soundId);
 						},
 						MouseButton2Click: () => {
+							if (props.static) return;
 							if (props.onRightClick === noop) return;
 							props.onRightClick();
 
@@ -223,8 +238,8 @@ export function Icon({ children, ...componentProps }: IconProps) {
 							if (!soundId) return;
 							props.playSound(soundId);
 						},
-						MouseEnter: props.hover,
-						MouseLeave: props.unhover,
+						MouseEnter: props.static ? noop : props.hover,
+						MouseLeave: props.static ? noop : props.unhover,
 					}}
 					Text={''}
 					BackgroundTransparency={props.backgroundTransparency}
@@ -276,6 +291,16 @@ export function Icon({ children, ...componentProps }: IconProps) {
 								: stateful(props.cornerRadius, currentState)
 						}
 					/>
+					{props.disabled && (
+						<frame
+							key={'DisabledOverlay'}
+							Size={UDim2.fromScale(1, 1)}
+							BackgroundTransparency={stylesheet.sizing.disabledOverlayTransparency}
+							BackgroundColor3={stylesheet.sizing.disabledOverlayColor}
+							BorderSizePixel={0}
+							ZIndex={10}
+						/>
+					)}
 				</textbutton>
 			</frame>
 		</LocationContext.Provider>

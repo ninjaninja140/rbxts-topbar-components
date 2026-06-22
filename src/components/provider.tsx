@@ -2,16 +2,93 @@ import React, { useState } from '@rbxts/react';
 import { LocationContext, useStylesheet } from '../context';
 import { useGuiInset } from '../hooks/use-gui-inset';
 import { useVoicechatEnabled } from '../hooks/use-voicechat-enabled';
+import { debugLog } from '../utilities/debug';
 import type { IconId } from './icon';
 
 export type SelectionMode = 'Single' | 'Multiple';
+
+// ── Dock container components ───────────────────────────────────────────────
+
+function DockFrame(props: {
+	anchor: Vector2;
+	position: UDim2;
+	paddingLeft?: UDim;
+	paddingRight?: UDim;
+	children: React.ReactNode;
+}) {
+	const stylesheet = useStylesheet().provider;
+	return (
+		<frame
+			BackgroundTransparency={1}
+			AnchorPoint={props.anchor}
+			Position={props.position}
+			Size={UDim2.fromScale(0, 1)}
+			AutomaticSize={Enum.AutomaticSize.X}
+		>
+			{(props.paddingLeft !== undefined || props.paddingRight !== undefined) && (
+				<uipadding
+					PaddingLeft={props.paddingLeft ?? new UDim(0, 0)}
+					PaddingRight={props.paddingRight ?? new UDim(0, 0)}
+				/>
+			)}
+			<uilistlayout
+				FillDirection={Enum.FillDirection.Horizontal}
+				SortOrder={Enum.SortOrder.LayoutOrder}
+				Padding={new UDim(0, stylesheet.iconSpacing)}
+				VerticalAlignment={Enum.VerticalAlignment.Center}
+			/>
+			{props.children}
+		</frame>
+	);
+}
+
+export function LeftDock({ children }: React.PropsWithChildren) {
+	return (
+		<DockFrame
+			anchor={new Vector2(0, 0.5)}
+			position={new UDim2(0, 0, 0.5, 0)}
+			children={children}
+		/>
+	);
+}
+
+export function CenterDock({ children }: React.PropsWithChildren) {
+	const stylesheet = useStylesheet().provider;
+	return (
+		<DockFrame
+			anchor={new Vector2(0.5, 0.5)}
+			position={new UDim2(0.5, 0, 0.5, 0)}
+			paddingLeft={new UDim(0, stylesheet.iconGroupSpacing)}
+			paddingRight={new UDim(0, stylesheet.iconGroupSpacing)}
+			children={children}
+		/>
+	);
+}
+
+export function RightDock({ children }: React.PropsWithChildren) {
+	const stylesheet = useStylesheet().provider;
+	return (
+		<DockFrame
+			anchor={new Vector2(1, 0.5)}
+			position={new UDim2(1, 0, 0.5, 0)}
+			paddingLeft={new UDim(0, stylesheet.iconGroupSpacing)}
+			children={children}
+		/>
+	);
+}
+
+// ── Provider ────────────────────────────────────────────────────────────────
 
 interface ProviderProps extends React.PropsWithChildren {
 	selectionMode?: SelectionMode;
 	gameVoiceChatEnabled?: boolean;
 }
 
-export function TopbarProvider({ selectionMode = 'Single', gameVoiceChatEnabled, children }: ProviderProps) {
+export function TopbarProvider({
+	selectionMode = 'Single',
+	gameVoiceChatEnabled,
+	children,
+}: ProviderProps) {
 	const [selectedIcons, setSelectedIcons] = useState<IconId[]>([]);
 	const inset = useGuiInset();
 	const voiceChatEnabled = useVoicechatEnabled();
@@ -19,7 +96,19 @@ export function TopbarProvider({ selectionMode = 'Single', gameVoiceChatEnabled,
 
 	const hasBetaLabel = gameVoiceChatEnabled && voiceChatEnabled;
 	const leftPadding = hasBetaLabel ? stylesheet.paddingLeft + 16 : stylesheet.paddingLeft;
-	const frameHeight = inset.Height - stylesheet.insetHeightOffset;
+
+	const rawHeight = inset.Height - stylesheet.insetHeightOffset;
+	const frameHeight =
+		stylesheet.forceFrameHeight !== undefined ? stylesheet.forceFrameHeight : rawHeight;
+
+	debugLog(
+		`TopbarProvider frame: inset.Height=${inset.Height}, inset.Width=${inset.Width}`,
+		`insetHeightOffset=${stylesheet.insetHeightOffset}`,
+		`rawHeight=${rawHeight}`,
+		`forceFrameHeight=${stylesheet.forceFrameHeight}`,
+		`finalHeight=${frameHeight}`,
+		`sizeScale=(${stylesheet.sizeScale.X}, ${stylesheet.sizeScale.Y})`,
+	);
 
 	return (
 		<LocationContext.Provider
@@ -54,12 +143,6 @@ export function TopbarProvider({ selectionMode = 'Single', gameVoiceChatEnabled,
 					PaddingRight={new UDim(0, stylesheet.paddingRight)}
 					PaddingTop={new UDim(0, stylesheet.paddingTop)}
 					PaddingBottom={new UDim(0, stylesheet.paddingBottom)}
-				/>
-				<uilistlayout
-					key={'UIListLayout'}
-					FillDirection={Enum.FillDirection.Horizontal}
-					SortOrder={Enum.SortOrder.LayoutOrder}
-					Padding={new UDim(0, stylesheet.iconSpacing)}
 				/>
 				{children}
 			</frame>

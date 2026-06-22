@@ -34,6 +34,13 @@ export interface Stylesheet {
 		sizeScale: Vector2;
 		/** Offset subtracted from the gui inset height */
 		insetHeightOffset: number;
+		/** Extra gap between left, center, and right icon groups (default 0) */
+		iconGroupSpacing: number;
+		/**
+		 * Explicit override for the provider frame Y size (in pixels).
+		 * When set, this replaces the automatic `(inset.Height - insetHeightOffset) * sizeScale.Y` calculation.
+		 */
+		forceFrameHeight: number | undefined;
 	};
 
 	/**
@@ -57,6 +64,10 @@ export interface Stylesheet {
 		minLabelWidthPadding: number;
 		/** Fraction of icon height used for the text button label size (default 0.8) */
 		buttonLabelHeightFraction: number;
+		/** Transparency of the dimming overlay when an icon is disabled (0 = fully visible, 1 = fully hidden) */
+		disabledOverlayTransparency: number;
+		/** Color of the dimming overlay when an icon is disabled */
+		disabledOverlayColor: Color3;
 	};
 
 	/**
@@ -120,6 +131,8 @@ export const DefaultStylesheet: Stylesheet = {
 		defaultState: 'deselected',
 		forcedState: 'deselected',
 		toggleStateOnClick: true,
+		static: false,
+		disabled: false,
 		selected: noop,
 		deselected: noop,
 		stateChanged: noop,
@@ -157,6 +170,8 @@ export const DefaultStylesheet: Stylesheet = {
 		position: UDim2.fromScale(1, 0),
 		sizeScale: new Vector2(1, 1),
 		insetHeightOffset: 0,
+		iconGroupSpacing: 0,
+		forceFrameHeight: undefined,
 	},
 	sizing: {
 		iconHeight: undefined,
@@ -166,6 +181,10 @@ export const DefaultStylesheet: Stylesheet = {
 		textMeasurementWidth: 99999,
 		minLabelWidthPadding: 12,
 		buttonLabelHeightFraction: 0.8,
+		/** Transparency of the dimming overlay when an icon is disabled (0 = fully visible, 1 = fully hidden) */
+		disabledOverlayTransparency: 0.55,
+		/** Color of the dimming overlay when an icon is disabled */
+		disabledOverlayColor: new Color3(0, 0, 0),
 	},
 	dropdownTheme: {
 		backgroundColor: new Color3(1, 1, 1),
