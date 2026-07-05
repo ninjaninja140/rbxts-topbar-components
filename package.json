@@ -1,7 +1,7 @@
 {
 	"name": "@nrbx/topbar-components",
-	"version": "1.0.11",
-	"main": "out/init.lua",
+	"version": "1.0.12",
+	"main": "out/init.luau",
 	"scripts": {
 		"build": "rbxtsc",
 		"watch": "rbxtsc -w",
