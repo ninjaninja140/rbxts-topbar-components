@@ -15,7 +15,7 @@ function defaultPlaySound(id: string) {
 export function noop() {}
 
 export interface Stylesheet {
-	icon: Required<IconProps>;
+	icon: Required<Omit<IconProps, 'style'>>;
 	dropdown: Required<DropdownProps>;
 
 	/**
@@ -58,6 +58,10 @@ export interface Stylesheet {
 		labelPadding: number;
 		/** Gap between the image and the text label (default 6) */
 		imageToTextSpacing: number;
+		/** Horizontal padding within the icon button (default 6, used in icon size calculations) */
+		iconHorizontalPadding: number;
+		/** Vertical padding within the icon button (default 6, subtracted from inset height) */
+		iconVerticalPadding: number;
 		/** Max width passed to GetTextBoundsParams (default 99999) */
 		textMeasurementWidth: number;
 		/** Extra padding subtracted from the min label width inside a dropdown (default 12) */
@@ -178,6 +182,8 @@ export const DefaultStylesheet: Stylesheet = {
 		imagePadding: 6,
 		labelPadding: 6,
 		imageToTextSpacing: 6,
+		iconHorizontalPadding: 6,
+		iconVerticalPadding: 6,
 		textMeasurementWidth: 99999,
 		minLabelWidthPadding: 12,
 		buttonLabelHeightFraction: 0.8,

@@ -13,7 +13,7 @@ import { LocationContext, useLocation, useStylesheet } from '../context';
 import { useAnimateableProps } from '../hooks/use-animateable-props';
 import { useGuiInset } from '../hooks/use-gui-inset';
 import { useId } from '../hooks/use-id';
-import { noop } from '../style';
+import { noop, type Stylesheet } from '../style';
 import { stateful } from '../utilities/resolve-state-dependent';
 
 export interface IconProps extends React.PropsWithChildren {
@@ -45,6 +45,8 @@ export interface IconProps extends React.PropsWithChildren {
 	static?: boolean;
 	/** When true, dulls the text and icon with a dimming overlay */
 	disabled?: boolean;
+	/** Per-icon stylesheet overrides — merged above the global stylesheet but below explicit props */
+	style?: Partial<IconProps & Stylesheet['sizing']>;
 	selected?: () => void;
 	deselected?: () => void;
 	hover?: () => void;
@@ -65,8 +67,7 @@ export type FromStateDependent<T> = T extends StateDependent<infer U> ? U : T;
 export type IconId = number;
 
 export function Icon(componentProps: IconProps) {
-	const { children } = componentProps;
-	const style = (componentProps as Record<string, unknown>).style as Partial<IconProps> | undefined;
+	const { children, style } = componentProps;
 	const inset = useGuiInset();
 	const location = useLocation();
 	const id = useId();
@@ -82,16 +83,21 @@ export function Icon(componentProps: IconProps) {
 
 	assert(location.type !== 'icon', 'Icons cannot be nested');
 
-	const merged = { ...stylesheet.icon, ...(style ?? {}), ...componentProps };
+	const sizing = {
+		...stylesheet.sizing,
+		...(style as Partial<Stylesheet['sizing']> | undefined ?? {}),
+	};
 
 	const animatedProps = useAnimateableProps(
 		currentState,
-		merged as Required<Pick<IconProps, ValidKeys>>,
+		{ ...stylesheet.icon, ...componentProps } as Required<Pick<IconProps, ValidKeys>>,
 		...ANIMATEABLE
 	);
 
 	const props = {
-		...merged,
+		...stylesheet.icon,
+		...(style ?? {}),
+		...componentProps,
 		...animatedProps,
 	};
 
@@ -142,7 +148,7 @@ export function Icon(componentProps: IconProps) {
 		params.Text = currentText;
 		params.Font = stateful(props.fontFace, currentState);
 		params.Size = stateful(props.textSize, currentState);
-		params.Width = stylesheet.sizing.textMeasurementWidth;
+		params.Width = sizing.textMeasurementWidth;
 
 		setTextBounds(TextService.GetTextBoundsAsync(params));
 		previousQueryRef.current = currentQuery;
@@ -150,29 +156,30 @@ export function Icon(componentProps: IconProps) {
 
 	const imageSizeOff = stateful(props.imageSizeOffset, currentState);
 	const forceHeight = location.type === 'dropdown' ? stylesheet.dropdown.forceHeight : undefined;
-	const iconHeight = stylesheet.sizing.iconHeight ?? forceHeight ?? inset.Height - 12;
-	const imageSize = iconHeight - stylesheet.sizing.imagePadding * 2 + imageSizeOff;
+	const iconHeight =
+		sizing.iconHeight ?? forceHeight ?? inset.Height - sizing.iconVerticalPadding * 2;
+	const imageSize = iconHeight - sizing.imagePadding * 2 + imageSizeOff;
 
 	const minLabelWidth =
 		location.type === 'dropdown'
-			? location.desiredIconWidth - stylesheet.sizing.minLabelWidthPadding
-			: inset.Height - stylesheet.sizing.labelPadding * 2;
+			? location.desiredIconWidth - sizing.minLabelWidthPadding
+			: inset.Height - sizing.iconHorizontalPadding * 2;
 	const accumulatedLabelWidth = currentImage ? textBounds.X : math.max(textBounds.X, minLabelWidth);
 
 	const iconSize = new Vector2(
 		math.max(
 			iconHeight,
 			textBounds.X +
-				stylesheet.sizing.labelPadding * 2 +
-				(currentImage && textBounds.X !== 0 ? imageSize + stylesheet.sizing.imageToTextSpacing : 0)
+				sizing.labelPadding * 2 +
+				(currentImage && textBounds.X !== 0 ? imageSize + sizing.imageToTextSpacing : 0)
 		),
 		iconHeight
 	);
-	const imagePos = stylesheet.sizing.imagePadding + imageSizeOff * -0.5;
+	const imagePos = sizing.imagePadding + imageSizeOff * -0.5;
 
 	const textLabelPos = new UDim2(
 		0,
-		currentImage ? imageSize + stylesheet.sizing.imagePadding * 2 : stylesheet.sizing.labelPadding,
+		currentImage ? imageSize + sizing.imagePadding * 2 : sizing.labelPadding,
 		0.5,
 		0
 	);
@@ -269,7 +276,7 @@ export function Icon(componentProps: IconProps) {
 							TextColor3={stateful(props.textColor, currentState)}
 							TextWrapped={false}
 							AnchorPoint={new Vector2(0, 0.5)}
-							Size={new UDim2(0, accumulatedLabelWidth, stylesheet.sizing.buttonLabelHeightFraction, 0)}
+							Size={new UDim2(0, accumulatedLabelWidth, sizing.buttonLabelHeightFraction, 0)}
 							Position={textLabelPos}
 							TextXAlignment={stateful(props.textAlignment, currentState)}
 							RichText={stateful(props.richText, currentState)}
@@ -297,8 +304,8 @@ export function Icon(componentProps: IconProps) {
 						<frame
 							key={'DisabledOverlay'}
 							Size={UDim2.fromScale(1, 1)}
-							BackgroundTransparency={stylesheet.sizing.disabledOverlayTransparency}
-							BackgroundColor3={stylesheet.sizing.disabledOverlayColor}
+						BackgroundTransparency={sizing.disabledOverlayTransparency}
+						BackgroundColor3={sizing.disabledOverlayColor}
 							BorderSizePixel={0}
 							ZIndex={10}
 						/>
