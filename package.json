@@ -1,18 +1,23 @@
 {
 	"name": "@nrbx/topbar-components",
-	"version": "1.0.12",
+	"version": "1.1.0",
 	"main": "out/init.luau",
 	"scripts": {
 		"build": "rbxtsc",
 		"watch": "rbxtsc -w",
 		"prepublishOnly": "npm run build"
 	},
-	"keywords": [],
+	"keywords": ["roblox-ts", "rbxts", "nn140", "nrbx", "topbar-plus"],
 	"author": "ninjaninja140",
 	"license": "MIT",
 	"description": "@rbxts/react component package mimicking topbar-plus with extra functionality, forked from @rbxts/topbar-components",
 	"types": "out/index.d.ts",
-	"files": ["out", "README.md", "LICENSE.txt", "!**/*.tsbuildinfo"],
+	"files": [
+		"out",
+		"README.md",
+		"LICENSE.txt",
+		"!**/*.tsbuildinfo"
+	],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/ninjaninja140/rbxts-topbar-components.git"
@@ -21,17 +26,17 @@
 		"access": "public"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.0",
+		"@biomejs/biome": "^2.5.7",
 		"@rbxts/compiler-types": "^3.0.0-types.0",
 		"@rbxts/react": "^17.3.7-ts.2",
-		"@rbxts/types": "^1.0.925",
+		"@rbxts/types": "^1.0.942",
 		"roblox-ts": "^3.0.0",
 		"typescript": "^6.0.3"
 	},
 	"dependencies": {
 		"@rbxts/object-utils": "^1.0.4",
 		"@rbxts/pretty-react-hooks": "^0.6.4",
-		"@rbxts/ripple": "^0.9.1",
+		"@rbxts/ripple": "^0.10.2",
 		"@rbxts/services": "^1.6.0",
 		"@rbxts/t": "^3.2.1"
 	},

@@ -4,22 +4,42 @@ import { LocationContext, useLocation, useStylesheet } from '../context';
 import type { IconId } from './icon';
 import type { SelectionMode } from './provider';
 
+/** Properties accepted by {@link Dropdown}. */
 export interface DropdownProps extends React.PropsWithChildren {
+	/** Minimum width of the dropdown in pixels. */
 	minWidth?: number;
+	/** Maximum height before the dropdown becomes scrollable. */
 	maxHeight?: number;
+	/** Maximum width of the dropdown in pixels. */
 	maxWidth?: number;
+	/** Vertical padding between child icons. */
 	padding?: UDim;
+	/** Fixed height applied to child icons inside this dropdown. */
 	forceHeight?: number;
+	/** Corner radius applied to child icons inside this dropdown. */
 	iconCornerRadius?: UDim;
+	/** Scroll bar thickness in pixels. */
 	scrollBarThickness?: number;
+	/** Scroll bar transparency (0 = opaque, 1 = invisible). */
 	scrollBarTransparency?: number;
+	/** Image for the scroll bar top cap. */
 	topImage?: string;
+	/** Image for the scroll bar bottom cap. */
 	bottomImage?: string;
+	/** Image for the scroll bar middle segment. */
 	midImage?: string;
+	/** Color applied to the scroll bar images. */
 	scrollBarImageColor?: Color3;
+	/** Selection mode: `Single` deselects others, `Multiple` allows many. */
 	selectionMode?: SelectionMode;
 }
 
+/**
+ * A dropdown menu that appears below its parent icon.
+ *
+ * Child `<Icon>` components placed inside automatically register and size
+ * themselves. The dropdown animates open/closed with a spring transition.
+ */
 export function Dropdown(componentProps: DropdownProps) {
 	const location = useLocation();
 	const fullStylesheet = useStylesheet();
@@ -49,8 +69,9 @@ export function Dropdown(componentProps: DropdownProps) {
 
 	useEffect(() => {
 		location.setAnimationState(true);
-		transitionMotion.linear(location.isVisible ? 1 : 0, {
-			speed: fullStylesheet.animation.dropdownTransitionSpeed,
+		transitionMotion.spring(location.isVisible ? 1 : 0, {
+			tension: fullStylesheet.animation.dropdownTransitionSpeed * 15,
+			friction: 26,
 		});
 	}, [location.isVisible]);
 
@@ -67,15 +88,11 @@ export function Dropdown(componentProps: DropdownProps) {
 				type: 'dropdown',
 				selectedIcons: selectedIcons,
 				iconSelected: (iconId) => {
-					if (props.selectionMode === 'Single') {
-						return setSelectedIcons([iconId]);
-					}
+					if (props.selectionMode === 'Single') return setSelectedIcons([iconId]);
 					return setSelectedIcons((icons) => [...icons, iconId]);
 				},
 				iconDeselected: (iconId) => {
-					if (props.selectionMode === 'Single' && selectedIcons.includes(iconId)) {
-						return setSelectedIcons([]);
-					}
+					if (props.selectionMode === 'Single' && selectedIcons.includes(iconId)) return setSelectedIcons([]);
 					return setSelectedIcons((icons) => icons.filter((T) => T !== iconId));
 				},
 				registerChild: (id, size) => {
@@ -112,22 +129,16 @@ export function Dropdown(componentProps: DropdownProps) {
 				MidImage={props.midImage}
 				TopImage={props.topImage}
 				BottomImage={props.bottomImage}
-				key={'Dropdown'}
 			>
-				<uicorner key={'DropdownCorner'} CornerRadius={fullStylesheet.dropdownTheme.cornerRadius} />
+				<uicorner CornerRadius={fullStylesheet.dropdownTheme.cornerRadius} />
 				<uistroke
-					key={'DropdownStroke'}
 					Thickness={fullStylesheet.dropdownTheme.borderSize}
 					Color={fullStylesheet.dropdownTheme.borderColor}
 					Transparency={fullStylesheet.dropdownTheme.borderTransparency}
 				/>
 				{props.children}
-				{isNested && <uipadding key={'UIPadding'} PaddingTop={stylesheet.padding} />}
-				<uilistlayout
-					key={'UIListLayout'}
-					SortOrder={Enum.SortOrder.LayoutOrder}
-					Padding={stylesheet.padding}
-				/>
+				{isNested && <uipadding PaddingTop={stylesheet.padding} />}
+				<uilistlayout SortOrder={Enum.SortOrder.LayoutOrder} Padding={stylesheet.padding} />
 			</scrollingframe>
 		</LocationContext.Provider>
 	);

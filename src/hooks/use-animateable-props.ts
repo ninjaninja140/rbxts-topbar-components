@@ -1,30 +1,26 @@
-import Object from '@rbxts/object-utils';
+import object from '@rbxts/object-utils';
 import { useMotion, usePrevious } from '@rbxts/pretty-react-hooks';
 import { type Binding, useEffect } from '@rbxts/react';
-import type { Motion, MotionGoal } from '@rbxts/ripple';
 import type { FromStateDependent, IconState, StateDependent } from '../components/icon';
 import { stateful } from '../utilities/resolve-state-dependent';
 import { springs } from '../utilities/springs';
 
-type Result<T extends Record<string, StateDependent<MotionGoal>>, K extends keyof T> = ExcludeMembers<
+type Result<T extends Record<string, StateDependent<unknown>>, K extends keyof T> = ExcludeMembers<
 	{
 		[P in keyof T]: P extends K ? Binding<NonNullable<FromStateDependent<T[P]>>> : undefined;
 	},
 	undefined
 >;
 
-export function useAnimateableProps<T extends Record<string, StateDependent<MotionGoal>>, K extends keyof T>(
+export function useAnimateableProps<T extends Record<string, StateDependent<unknown>>, K extends keyof T>(
 	state: IconState,
 	props: T,
 	...keys: K[]
 ) {
 	const previousProps = usePrevious(props);
-	const motions: [Binding<MotionGoal>, Motion<MotionGoal>][] = [];
+	const motions: LuaTuple<[Binding<unknown>, unknown]>[] = [];
 
-	for (const key of keys) {
-		const [binding, motion] = useMotion(stateful(props[key], state));
-		motions.push([binding, motion]);
-	}
+	for (const key of keys) motions.push(useMotion(stateful(props[key], state) as never) as never);
 
 	useEffect(() => {
 		for (const key of keys) {
@@ -32,9 +28,12 @@ export function useAnimateableProps<T extends Record<string, StateDependent<Moti
 			const previousValue = stateful(previousProps, state);
 			if (value === previousValue) continue;
 
-			motions[keys.indexOf(key)][1].spring(value, springs.responsive);
+			(motions[keys.indexOf(key)][1] as { spring: (goal: unknown, opts?: object) => void }).spring(
+				value,
+				springs.responsive
+			);
 		}
 	}, [props]);
 
-	return Object.fromEntries(keys.map((key) => [key, motions[keys.indexOf(key)][0]])) as Result<T, K>;
+	return object.fromEntries(keys.map((key) => [key, motions[keys.indexOf(key)][0]])) as Result<T, K>;
 }

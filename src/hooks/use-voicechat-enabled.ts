@@ -7,7 +7,7 @@ export function useVoicechatEnabled() {
 
 	useAsyncEffect(async () => {
 		setEnabled(
-			VoiceChatService.IsVoiceEnabledForUserIdAsync(Players.LocalPlayer.UserId),
+			VoiceChatService.IsVoiceEnabledForUserIdAsync(Players.LocalPlayer as unknown as User),
 		);
 	}, []);
 

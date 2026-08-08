@@ -2,70 +2,138 @@ import { deepEquals } from '@rbxts/object-utils';
 import {
 	mapBinding,
 	useAsyncEffect,
+	useMotion,
 	useMountEffect,
 	useUnmountEffect,
 	useUpdateEffect,
 } from '@rbxts/pretty-react-hooks';
 import React, { useBinding, useEffect, useRef, useState } from '@rbxts/react';
-import type { MotionGoal } from '@rbxts/ripple';
+import type { Animatable } from '@rbxts/ripple';
 import { TextService } from '@rbxts/services';
 import { LocationContext, useLocation, useStylesheet } from '../context';
 import { useAnimateableProps } from '../hooks/use-animateable-props';
 import { useGuiInset } from '../hooks/use-gui-inset';
 import { useId } from '../hooks/use-id';
+import { useToggleKey } from '../hooks/use-toggle-key';
 import { noop, type Stylesheet } from '../style';
 import { stateful } from '../utilities/resolve-state-dependent';
+import { Notification } from './notification';
 
+/**
+ * Properties accepted by {@link Icon}.
+ *
+ * Most visual props accept a `StateDependent<T>` — either a single value for
+ * both states, or `{ deselected: T; selected: T }` to animate between them.
+ */
 export interface IconProps extends React.PropsWithChildren {
+	/** Background transparency of the button. Animated on state change. */
 	backgroundTransparency?: StateDependent<number>;
+	/** Background color of the button. Animated on state change. */
 	backgroundColor?: StateDependent<Color3>;
+	/** Asset ID or full asset string for the icon image. */
 	imageId?: StateDependent<string>;
+	/** Color applied to the icon image. Animated on state change. */
 	imageColor?: StateDependent<Color3>;
+	/** Color applied to the label text. */
 	textColor?: StateDependent<Color3>;
+	/** Transparency of the icon image. Animated on state change. */
 	imageTransparency?: StateDependent<number>;
+	/** Layout order used for horizontal sorting in docks. */
 	layoutOrder?: StateDependent<number>;
+	/** Text displayed next to or instead of the image. */
 	text?: StateDependent<string>;
+	/** Font size of the label text. */
 	textSize?: StateDependent<number>;
+	/** Pixel offset added to the computed image size. Negative values shrink the image. */
 	imageSizeOffset?: StateDependent<number>;
+	/** Offset into the source image to crop from. */
 	imageRectOffset?: StateDependent<Vector2>;
+	/** Size of the crop region from the source image. */
 	imageRectSize?: StateDependent<Vector2>;
+	/** Initial state when the icon first mounts. */
 	defaultState?: IconState;
+	/** Font face used for the label text. */
 	fontFace?: StateDependent<Font>;
+	/** Override that locks the icon to a specific state. */
 	forcedState?: IconState;
+	/** Sound played on left click (asset ID or empty for none). */
 	leftClickSound?: StateDependent<string>;
+	/** Sound played on right click (asset ID or empty for none). */
 	rightClickSound?: StateDependent<string>;
+	/** Corner radius of the button. */
 	cornerRadius?: StateDependent<UDim>;
+	/** Stroke transparency of the label text. */
 	strokeTransparency?: StateDependent<number>;
+	/** Stroke color of the label text. */
 	strokeColor?: StateDependent<Color3>;
+	/** Stroke thickness of the label text. */
 	strokeThickness?: StateDependent<number>;
+	/** Horizontal text alignment within the label. */
 	textAlignment?: StateDependent<Enum.TextXAlignment>;
+	/** Whether the label supports rich text markup. */
 	richText?: StateDependent<boolean>;
+	/** When `true`, clicking the icon toggles between selected and deselected. */
 	toggleStateOnClick?: boolean;
-	/** When true, renders as a non-interactive label (no clicks, no hovers, no state changes) */
+	/** When `true`, the icon ignores all clicks, hover, and state changes. */
 	static?: boolean;
-	/** When true, dulls the text and icon with a dimming overlay */
+	/** When `true`, the icon is dimmed and non-interactive. */
 	disabled?: boolean;
-	/** Per-icon stylesheet overrides — merged above the global stylesheet but below explicit props */
+	/** Inline overrides for icon props and sizing values. */
 	style?: Partial<IconProps & Stylesheet['sizing']>;
+	/** Explicit icon width in pixels. When undefined or `0`, auto-fits to content. */
+	iconWidth?: number;
+	/** Horizontal padding between the button edge and its content. */
+	contentPaddingX?: number;
+	/** Vertical padding between the button edge and its content. */
+	contentPaddingY?: number;
+	/** Gap between the image and the text label. */
+	imageToTextSpacing?: number;
+	/** KeyCode that toggles the icon when pressed. */
+	toggleKey?: Enum.KeyCode;
+	/** Shows a red notification badge with this count. Hides when `0` or `undefined`. */
+	notificationCount?: number;
+	/** Callback fired when the icon becomes selected. */
 	selected?: () => void;
+	/** Callback fired when the icon becomes deselected. */
 	deselected?: () => void;
+	/** Callback fired on mouse enter. */
 	hover?: () => void;
+	/** Callback fired on mouse leave. */
 	unhover?: () => void;
+	/** Callback fired whenever the state changes (receives the new state). */
 	stateChanged?: (state: IconState) => void;
+	/** Callback fired on left click (in addition to the built-in toggle). */
 	onClick?: () => void;
+	/** Callback fired on right click. */
 	onRightClick?: () => void;
+	/** Function used to play click sounds. Receives the sound asset ID. */
 	playSound?: (id: string) => void;
 }
 
-type ValidKeys = ExtractKeys<Required<IconProps>, StateDependent<MotionGoal>>;
+type ValidKeys = ExtractKeys<Required<IconProps>, StateDependent<Animatable>>;
 
 const ANIMATEABLE = ['backgroundColor', 'backgroundTransparency', 'imageColor', 'imageTransparency'] as const;
 
+/** Icon select/deselect state. */
 export type IconState = 'selected' | 'deselected';
+/**
+ * A value that can change with icon state.
+ * Pass a single value for both states, or `{ deselected, selected }` for
+ * separate values that animate on state transitions.
+ */
 export type StateDependent<T> = Record<IconState, T> | T;
+/** Extracts the inner type from a `StateDependent`. */
 export type FromStateDependent<T> = T extends StateDependent<infer U> ? U : T;
+/** Unique numeric identifier for an icon instance. */
 export type IconId = number;
 
+/**
+ * A single icon in the topbar.
+ *
+ * Supports an image, a text label, state-dependent styling, animated state
+ * transitions, hover lift, notification badges, toggle keys, and nested
+ * dropdown content.
+ */
 export function Icon(componentProps: IconProps) {
 	const { children, style } = componentProps;
 	const inset = useGuiInset();
@@ -73,6 +141,9 @@ export function Icon(componentProps: IconProps) {
 	const id = useId();
 
 	const [currentState, setState] = useState<IconState>(componentProps.forcedState ?? 'deselected');
+
+	const [hovered, setHovered] = useState(false);
+	const [hoverLift, hoverLiftMotion] = useMotion(0);
 
 	const [dropdownAnimating, setAnimationState] = useState(false);
 	const [contentSize, setContentSize] = useState(new Vector2(0, 0));
@@ -85,7 +156,7 @@ export function Icon(componentProps: IconProps) {
 
 	const sizing = {
 		...stylesheet.sizing,
-		...(style as Partial<Stylesheet['sizing']> | undefined ?? {}),
+		...((style as Partial<Stylesheet['sizing']> | undefined) ?? {}),
 	};
 
 	const animatedProps = useAnimateableProps(
@@ -126,10 +197,22 @@ export function Icon(componentProps: IconProps) {
 
 	useUpdateEffect(() => {
 		if (props.static) return;
-		if (currentState === 'selected' && !location.selectedIcons.includes(id)) {
-			setState('deselected');
-		}
+		if (currentState === 'selected' && !location.selectedIcons.includes(id)) setState('deselected');
 	}, [location.selectedIcons]);
+
+	useEffect(() => {
+		if (stylesheet.animation.hoverEnabled) {
+			hoverLiftMotion.spring(hovered ? 1 : 0, stylesheet.animation.stateSpring);
+		}
+	}, [hovered, stylesheet.animation.hoverEnabled]);
+
+	if (componentProps.toggleKey && componentProps.toggleKey !== Enum.KeyCode.Unknown) {
+		useToggleKey(componentProps.toggleKey, () => {
+			if (props.static) return;
+			if (stateful(props.toggleStateOnClick, currentState))
+				setState(currentState === 'deselected' ? 'selected' : 'deselected');
+		});
+	}
 
 	const currentImage = stateful(props.imageId, currentState);
 	const currentText = stateful(props.text, currentState);
@@ -156,9 +239,13 @@ export function Icon(componentProps: IconProps) {
 
 	const imageSizeOff = stateful(props.imageSizeOffset, currentState);
 	const forceHeight = location.type === 'dropdown' ? stylesheet.dropdown.forceHeight : undefined;
-	const iconHeight =
-		sizing.iconHeight ?? forceHeight ?? inset.Height - sizing.iconVerticalPadding * 2;
-	const imageSize = iconHeight - sizing.imagePadding * 2 + imageSizeOff;
+	const iconHeight = sizing.iconHeight ?? forceHeight ?? inset.Height - sizing.iconVerticalPadding * 2;
+
+	const contentPadX = props.contentPaddingX ?? sizing.contentPaddingX;
+	const contentPadY = props.contentPaddingY ?? sizing.contentPaddingY;
+	const imageToTextGap = props.imageToTextSpacing ?? sizing.imageToTextSpacing;
+
+	const imageSize = iconHeight - contentPadY * 2 + imageSizeOff;
 
 	const minLabelWidth =
 		location.type === 'dropdown'
@@ -166,23 +253,14 @@ export function Icon(componentProps: IconProps) {
 			: inset.Height - sizing.iconHorizontalPadding * 2;
 	const accumulatedLabelWidth = currentImage ? textBounds.X : math.max(textBounds.X, minLabelWidth);
 
-	const iconSize = new Vector2(
-		math.max(
-			iconHeight,
-			textBounds.X +
-				sizing.labelPadding * 2 +
-				(currentImage && textBounds.X !== 0 ? imageSize + sizing.imageToTextSpacing : 0)
-		),
-		iconHeight
-	);
-	const imagePos = sizing.imagePadding + imageSizeOff * -0.5;
+	const contentWidth = currentImage ? imageSize + imageToTextGap + textBounds.X : textBounds.X;
+	const autoWidth = contentWidth + contentPadX * 2;
+	const iconWidth = props.iconWidth || sizing.iconWidth || math.max(iconHeight, autoWidth);
 
-	const textLabelPos = new UDim2(
-		0,
-		currentImage ? imageSize + sizing.imagePadding * 2 : sizing.labelPadding,
-		0.5,
-		0
-	);
+	const iconSize = new Vector2(iconWidth, iconHeight);
+	const imagePosY = (iconHeight - imageSize) / 2 + imageSizeOff * -0.5;
+
+	const textLabelPos = new UDim2(0, currentImage ? contentPadX + imageSize + imageToTextGap : contentPadX, 0.5, 0);
 
 	useEffect(() => {
 		if (props.static) return;
@@ -219,19 +297,19 @@ export function Icon(componentProps: IconProps) {
 			<frame
 				Size={wrapSize}
 				LayoutOrder={stateful(props.layoutOrder, currentState)}
+				Position={mapBinding(hoverLift, (t) => new UDim2(0, 0, 0, -t * stylesheet.animation.hoverLift))}
 				BackgroundTransparency={1}
-				key={'IconWrapper'}
 			>
 				<textbutton
 					Size={new UDim2(1, 0, 0, iconSize.Y)}
 					Active={!props.static}
 					Selectable={!props.static}
+					AutoButtonColor={!props.static}
 					Event={{
 						MouseButton1Click: () => {
 							if (props.static) return;
-							if (stateful(props.toggleStateOnClick, currentState)) {
+							if (stateful(props.toggleStateOnClick, currentState))
 								setState(currentState === 'deselected' ? 'selected' : 'deselected');
-							}
 							props.onClick();
 
 							const soundId = stateful(props.leftClickSound, currentState);
@@ -247,24 +325,30 @@ export function Icon(componentProps: IconProps) {
 							if (!soundId) return;
 							props.playSound(soundId);
 						},
-						MouseEnter: props.static ? noop : props.hover,
-						MouseLeave: props.static ? noop : props.unhover,
+						MouseEnter: () => {
+							if (props.static) return;
+							setHovered(true);
+							props.hover();
+						},
+						MouseLeave: () => {
+							if (props.static) return;
+							setHovered(false);
+							props.unhover();
+						},
 					}}
 					Text={''}
-					BackgroundTransparency={props.backgroundTransparency}
+					BackgroundTransparency={stateful(props.backgroundTransparency, currentState) as unknown as number}
 					BackgroundColor3={stateful(props.backgroundColor, currentState)}
-					key={'IconButton'}
 				>
 					{children}
 					{currentImage !== undefined && currentImage !== '' && (
 						<imagelabel
-							key={'IconImage'}
 							Size={UDim2.fromOffset(imageSize, imageSize)}
-							Position={UDim2.fromOffset(imagePos, imagePos)}
+							Position={UDim2.fromOffset(contentPadX, imagePosY)}
 							Image={currentImage}
 							BackgroundTransparency={1}
-							ImageColor3={props.imageColor}
-							ImageTransparency={props.imageTransparency}
+							ImageColor3={stateful(props.imageColor, currentState) as unknown as Color3}
+							ImageTransparency={stateful(props.imageTransparency, currentState) as unknown as number}
 							ImageRectOffset={stateful(props.imageRectOffset, currentState)}
 							ImageRectSize={stateful(props.imageRectSize, currentState)}
 						/>
@@ -282,10 +366,8 @@ export function Icon(componentProps: IconProps) {
 							RichText={stateful(props.richText, currentState)}
 							BackgroundTransparency={1}
 							Text={currentText}
-							key={'IconText'}
 						>
 							<uistroke
-								key={'UIStroke'}
 								Thickness={stateful(props.strokeThickness, currentState)}
 								Color={stateful(props.strokeColor, currentState)}
 								Transparency={stateful(props.strokeTransparency, currentState)}
@@ -293,7 +375,6 @@ export function Icon(componentProps: IconProps) {
 						</textlabel>
 					)}
 					<uicorner
-						key={'UICorner'}
 						CornerRadius={
 							location.type === 'dropdown'
 								? stylesheet.dropdown.iconCornerRadius
@@ -302,13 +383,15 @@ export function Icon(componentProps: IconProps) {
 					/>
 					{props.disabled && (
 						<frame
-							key={'DisabledOverlay'}
 							Size={UDim2.fromScale(1, 1)}
-						BackgroundTransparency={sizing.disabledOverlayTransparency}
-						BackgroundColor3={sizing.disabledOverlayColor}
+							BackgroundTransparency={sizing.disabledOverlayTransparency}
+							BackgroundColor3={sizing.disabledOverlayColor}
 							BorderSizePixel={0}
 							ZIndex={10}
 						/>
+					)}
+					{componentProps.notificationCount !== undefined && (
+						<Notification count={componentProps.notificationCount} />
 					)}
 				</textbutton>
 			</frame>

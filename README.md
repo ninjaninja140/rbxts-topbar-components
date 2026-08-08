@@ -15,7 +15,7 @@
 
 **Topbar Components** is a react component package that mimics [*topbar-plus*](https://devforum.roblox.com/t/v3-topbarplus-v300-construct-intuitive-topbar-icons-customise-them-with-themes-dropdowns-captions-labels-and-much-more/1017485) for [Roblox-TS](https://roblox-ts.com), with JSX markup support.
 
-## 📦 Installation
+## Installation
 
 **@nrbx/topbar-components** is available on NPM and can be installed with the following commands:
 
@@ -45,7 +45,7 @@ And this to your `tsconfig.json`
 "typeRoots": ["node_modules/@rbxts", "node_modules/@nrbx"],
 ```
 
-### ⚡ Quick Start
+### Quick Start
 
 Instantiate `<TopbarProvider />` to be a root of your topbar component tree.
 
@@ -55,7 +55,7 @@ Instantiate `<TopbarProvider />` to be a root of your topbar component tree.
 </TopbarProvider>
 ```
 
-#### 📍 Positioning icons with dock containers
+#### Positioning icons with dock containers
 
 Icons placed directly inside `<TopbarProvider>` default to the left side. Use the dock container components to position icons at the center or right of the bar:
 
@@ -76,16 +76,16 @@ Icons placed directly inside `<TopbarProvider>` default to the left side. Use th
 
 | Container | Anchor | Purpose |
 |---|---|---|
-| `<LeftDock>` | left edge | Default — icons flow left-to-right from the left |
+| `<LeftDock>` | left edge | Default - icons flow left-to-right from the left |
 | `<CenterDock>` | center (50%) | Centers icons in the bar |
 | `<RightDock>` | right edge | Right-aligns icons |
 
 Each dock container renders its own horizontal list with the configured `iconSpacing` and vertical centering. Center and right docks automatically apply `iconGroupSpacing` for visual separation.
 
-#### 🏷️ Icon props: `static` and `disabled`
+#### Icon props: `static` and `disabled`
 
-- **`static`** — turns the icon into a non-interactive label (no clicks, no hovers, no state toggling, no sounds)
-- **`disabled`** — dims the icon with a configurable semi-transparent overlay
+- **`static`** - turns the icon into a non-interactive label (no clicks, no hovers, no state toggling, no sounds)
+- **`disabled`** - dims the icon with a configurable semi-transparent overlay
 
 ```tsx
 <Icon text="Read Only" static />       {/* label, not clickable */}
@@ -95,7 +95,7 @@ Each dock container renders its own horizontal list with the configured `iconSpa
 
 The disabled overlay transparency and color are configurable via the stylesheet `sizing` section.
 
-#### 🔽 Dropdowns
+#### Dropdowns
 
 You can add a dropdown to an icon by mounting `<Dropdown />` component as it's child.
 Dropdowns & TopbarProvider have a property called `selectionMode`, which lets you specify how many icons can be selected at once.
@@ -111,7 +111,107 @@ Dropdowns & TopbarProvider have a property called `selectionMode`, which lets yo
 
 Dropdowns **can be nested.**
 
-### 🎨 Stylesheets
+#### Hover animations
+
+Icons can lift upward on hover for a subtle interactive feel. Enable or disable it globally via the stylesheet:
+
+```tsx
+<Stylesheet stylesheet={{
+    animation: {
+        hoverEnabled: true,   // turn hover lift on/off
+        hoverLift: 4,         // pixels to lift
+    },
+}}>
+    <TopbarProvider>
+        <Icon text="Hover Me" />
+    </TopbarProvider>
+</Stylesheet>
+```
+
+Hover lift uses the same spring configuration as state transitions (`animation.stateSpring`).
+
+#### Notification badges
+
+Add a red notification badge to any icon with the `notificationCount` prop. Counts over 99 display as `99+`. The badge hides automatically when the count is 0.
+
+```tsx
+<Icon text="Inbox" notificationCount={3} />
+<Icon text="Mail" notificationCount={150} />   {/* shows "99+" */}
+<Icon text="Clear" notificationCount={0} />     {/* badge hidden */}
+```
+
+Badge styling (colors, position, corner radius, border) is controlled via `stylesheet.notification`.
+
+#### Toggle keys
+
+Bind a keyboard key to toggle an icon on/off with the `toggleKey` prop:
+
+```tsx
+<Icon text="Menu" toggleKey={Enum.KeyCode.M} toggleStateOnClick />
+```
+
+Any `Enum.KeyCode` value works. The key binding only activates while the icon is mounted.
+
+#### Tooltips
+
+Wrap any element in a `<Tooltip>` to show a hover tooltip after a configurable delay:
+
+```tsx
+<Tooltip content="Go home" side="bottom" delayMs={500}>
+    <Icon imageId="rbxassetid://..." />
+</Tooltip>
+```
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `content` | `string` | required | Text displayed inside the tooltip |
+| `side` | `"top"` \| `"bottom"` \| `"left"` \| `"right"` | `"top"` | Which side of the child to appear on |
+| `delayMs` | `number` | stylesheet value | Milliseconds before the tooltip appears |
+
+Tooltip appearance (colors, font, padding, border) is controlled via `stylesheet.tooltip`.
+
+#### Custom Dropdowns
+
+Use `<CustomDropdown>` when you need to show rich, arbitrary content in a dropdown panel - not just child `<Icon>` elements:
+
+```tsx
+<Icon text="Info" toggleStateOnClick>
+    <CustomDropdown width={250} maxHeight={180}>
+        <textlabel Text="Custom content here!" />
+        <textbutton Text="A button" />
+    </CustomDropdown>
+</Icon>
+```
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `visible` | `boolean` | - | Whether the dropdown is open (usually driven by icon state) |
+| `width` | `number` | `200` | Width in pixels |
+| `maxHeight` | `number` | `200` | Max height before scrolling |
+| `position` | `UDim2` | stylesheet value | Position relative to the parent icon |
+
+Appearance is controlled via `stylesheet.customDropdown`.
+
+#### Overflow handler
+
+When you have many icons in a dock, wrap them in `<Overflow>` to automatically collapse extras into a "more" (⋯) dropdown:
+
+```tsx
+<LeftDock>
+    <Overflow>
+        <Icon text="Home" />
+        <Icon text="Settings" />
+        <Icon text="Profile" />
+        <Icon text="Messages" />
+        <Icon text="Help" />
+        {/* ... many more ... */}
+    </Overflow>
+</LeftDock>
+```
+
+Based on TopbarPlus v3's overflow handler.
+
+### Stylesheets
 
 You can use stylesheets to override default properties of all components within.
 Stylesheets are partial, and work like patches to already established default properties within the package:
@@ -144,7 +244,7 @@ The stylesheet exposes the following sections for full control:
 
 ```tsx
 <Stylesheet stylesheet={{
-    // ── Icon defaults (all IconProps) ──
+    // Icon defaults (all IconProps)
     icon: {
         textSize: 20,
         textColor: { selected: Color3.fromRGB(57, 60, 65), deselected: Color3.fromRGB(255, 255, 255) },
@@ -157,7 +257,7 @@ The stylesheet exposes the following sections for full control:
         // ... all other IconProps
     },
 
-    // ── Dropdown defaults (all DropdownProps) ──
+    // Dropdown defaults (all DropdownProps)
     dropdown: {
         maxWidth: 300,
         minWidth: 200,
@@ -168,7 +268,7 @@ The stylesheet exposes the following sections for full control:
         // ... all other DropdownProps
     },
 
-    // ── Provider frame ──
+    // Provider frame
     provider: {
         paddingLeft: 8,           paddingRight: 12,
         paddingTop: 11,           paddingBottom: 0,
@@ -181,12 +281,15 @@ The stylesheet exposes the following sections for full control:
         forceFrameHeight: undefined,  // override auto height (e.g. 55)
     },
 
-    // ── Icon internal sizing ──
+    // Icon internal sizing
     sizing: {
-        iconHeight: undefined,    // explicit override
+        iconHeight: undefined,       // explicit override
+        iconWidth: undefined,        // explicit override (auto-fits when undefined/0)
         imagePadding: 6,
         labelPadding: 6,
         imageToTextSpacing: 6,
+        contentPaddingX: 6,          // horizontal pad from button edge to content
+        contentPaddingY: 6,          // vertical pad from button edge to content
         textMeasurementWidth: 99999,
         minLabelWidthPadding: 12,
         buttonLabelHeightFraction: 0.8,
@@ -194,7 +297,7 @@ The stylesheet exposes the following sections for full control:
         disabledOverlayColor: new Color3(0, 0, 0),
     },
 
-    // ── Dropdown surface theme ──
+    // Dropdown surface theme
     dropdownTheme: {
         backgroundColor: new Color3(1, 1, 1),
         backgroundTransparency: 0,
@@ -204,17 +307,60 @@ The stylesheet exposes the following sections for full control:
         position: UDim2.fromScale(0, 1),
     },
 
-    // ── Animation ──
+    // Animation
     animation: {
         dropdownTransitionSpeed: 10,
         stateSpring: { tension: 400 },
+        hoverEnabled: true,           // whether icons lift on hover
+        hoverLift: 4,                 // pixels to lift
+    },
+
+    // Notification badge
+    notification: {
+        backgroundColor: Color3.fromRGB(255, 59, 48),
+        backgroundTransparency: 0,
+        textColor: new Color3(1, 1, 1),
+        textSize: 12,
+        fontFace: new Font("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
+        position: new UDim2(0.5, 4, 0, -4),
+        size: new UDim2(0, 18, 0, 18),
+        cornerRadius: new UDim(1, 0),
+        borderColor: new Color3(1, 1, 1),
+        borderTransparency: 0,
+    },
+
+    // Tooltip
+    tooltip: {
+        backgroundColor: new Color3(0.1, 0.1, 0.1),
+        backgroundTransparency: 0.2,
+        textColor: new Color3(1, 1, 1),
+        textSize: 14,
+        fontFace: new Font("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium),
+        cornerRadius: new UDim(0, 4),
+        borderColor: new Color3(0.4, 0.4, 0.4),
+        borderTransparency: 0,
+        borderSize: 1,
+        paddingX: 8,
+        paddingY: 4,
+        delayMs: 500,
+    },
+
+    // Custom dropdown
+    customDropdown: {
+        backgroundColor: new Color3(1, 1, 1),
+        backgroundTransparency: 0,
+        cornerRadius: new UDim(0, 6),
+        borderSize: 0,
+        borderColor: new Color3(0, 0, 0),
+        borderTransparency: 1,
+        position: UDim2.fromScale(0, 1),
     },
 }}>
     {/* children */}
 </Stylesheet>
 ```
 
-### 📝 License
+### License
 
 Package is licensed under the MIT License.
 

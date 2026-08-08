@@ -14,88 +14,173 @@ function defaultPlaySound(id: string) {
 
 export function noop() {}
 
+/** Complete theme configuration consumed by all topbar components. */
 export interface Stylesheet {
+	/** Default values for every {@link Icon} prop. */
 	icon: Required<Omit<IconProps, 'style'>>;
+	/** Default values for every {@link Dropdown} prop. */
 	dropdown: Required<DropdownProps>;
 
-	/**
-	 * Configure the top-level provider frame: padding, spacing, background, sizing.
-	 */
+	/** Topbar container layout settings. */
 	provider: {
+		/** Left padding of the topbar frame. */
 		paddingLeft: number;
+		/** Right padding of the topbar frame. */
 		paddingRight: number;
+		/** Top padding of the topbar frame. */
 		paddingTop: number;
+		/** Bottom padding of the topbar frame. */
 		paddingBottom: number;
+		/** Horizontal gap between adjacent icons. */
 		iconSpacing: number;
+		/** Background transparency of the topbar frame. */
 		backgroundTransparency: number;
+		/** Background color of the topbar frame. */
 		backgroundColor: Color3;
+		/** Anchor point of the topbar frame. */
 		anchorPoint: Vector2;
+		/** Position of the topbar frame. */
 		position: UDim2;
+		/** Multiplier applied to the topbar frame size. */
 		sizeScale: Vector2;
-		/** Offset subtracted from the gui inset height */
+		/** Pixels subtracted from the gui inset height. */
 		insetHeightOffset: number;
-		/** Extra gap between left, center, and right icon groups (default 0) */
+		/** Extra horizontal gap between left/center and right/center icon groups. */
 		iconGroupSpacing: number;
-		/**
-		 * Explicit override for the provider frame Y size (in pixels).
-		 * When set, this replaces the automatic `(inset.Height - insetHeightOffset) * sizeScale.Y` calculation.
-		 */
+		/** Override for the topbar frame height. Uses inset height when `undefined`. */
 		forceFrameHeight: number | undefined;
 	};
 
-	/**
-	 * Fine-grained sizing & layout overrides for icon internals.
-	 */
+	/** Sizing and spacing values shared by all icons. */
 	sizing: {
-		/**
-		 * Explicit icon height override.
-		 * When defined, this replaces the automatic `forceHeight ?? inset.Height - 12` calculation.
-		 */
+		/** Fixed icon height. Uses the inset height when `undefined`. */
 		iconHeight: number | undefined;
-		/** Padding between the icon edge and the image (default 6) */
+		/** Fixed icon width. Auto-fits to content when `undefined` or `0`. */
+		iconWidth: number | undefined;
+		/** Padding around the image inside the icon button. */
 		imagePadding: number;
-		/** Padding between the icon edge and the text label (default 6) */
+		/** Padding around the label inside the icon button. */
 		labelPadding: number;
-		/** Gap between the image and the text label (default 6) */
+		/** Gap between the icon image and its text label. */
 		imageToTextSpacing: number;
-		/** Horizontal padding within the icon button (default 6, used in icon size calculations) */
+		/** Horizontal padding applied to icons. */
 		iconHorizontalPadding: number;
-		/** Vertical padding within the icon button (default 6, subtracted from inset height) */
+		/** Vertical padding applied to icons. */
 		iconVerticalPadding: number;
-		/** Max width passed to GetTextBoundsParams (default 99999) */
+		/** Horizontal outer padding from button edge to content. */
+		contentPaddingX: number;
+		/** Vertical outer padding from button edge to content. */
+		contentPaddingY: number;
+		/** Width used when measuring text bounds. */
 		textMeasurementWidth: number;
-		/** Extra padding subtracted from the min label width inside a dropdown (default 12) */
+		/** Minimum label width padding when inside a dropdown. */
 		minLabelWidthPadding: number;
-		/** Fraction of icon height used for the text button label size (default 0.8) */
+		/** Fraction of icon height used for the label's vertical size. */
 		buttonLabelHeightFraction: number;
-		/** Transparency of the dimming overlay when an icon is disabled (0 = fully visible, 1 = fully hidden) */
+		/** Transparency of the overlay shown on disabled icons. */
 		disabledOverlayTransparency: number;
-		/** Color of the dimming overlay when an icon is disabled */
+		/** Color of the overlay shown on disabled icons. */
 		disabledOverlayColor: Color3;
 	};
 
-	/**
-	 * Visual theming for the dropdown surface (background, border, position).
-	 */
+	/** Appearance of the {@link Dropdown} panel. */
 	dropdownTheme: {
+		/** Background color of the dropdown. */
 		backgroundColor: Color3;
+		/** Background transparency of the dropdown. */
 		backgroundTransparency: number;
+		/** Corner radius of the dropdown. */
 		cornerRadius: UDim;
+		/** Thickness of the dropdown border. */
 		borderSize: number;
+		/** Color of the dropdown border. */
 		borderColor: Color3;
+		/** Transparency of the dropdown border. */
 		borderTransparency: number;
-		/** Position of the dropdown relative to its parent icon (default (0, 1)) */
+		/** Position of the dropdown relative to its parent icon. */
 		position: UDim2;
 	};
 
-	/**
-	 * Global animation configuration.
-	 */
+	/** Animation configuration. */
 	animation: {
-		/** Speed value used by the dropdown transition motion (default 10) */
+		/** Speed of the dropdown open/close spring. Higher = faster. */
 		dropdownTransitionSpeed: number;
-		/** Spring options for icon state transitions (color, transparency, etc.) */
+		/** Spring options used for icon state transitions and hover lift. */
 		stateSpring: SpringOptions;
+		/** Whether icons lift on hover. Set to `false` to disable globally. */
+		hoverEnabled: boolean;
+		/** How many pixels icons lift upward on hover. */
+		hoverLift: number;
+	};
+
+	/** Appearance of the notification badge. */
+	notification: {
+		/** Background color of the badge. */
+		backgroundColor: Color3;
+		/** Background transparency of the badge. */
+		backgroundTransparency: number;
+		/** Text color inside the badge. */
+		textColor: Color3;
+		/** Font size of the badge text. */
+		textSize: number;
+		/** Font face of the badge text. */
+		fontFace: Font;
+		/** Position of the badge relative to the icon. */
+		position: UDim2;
+		/** Size of the badge. */
+		size: UDim2;
+		/** Corner radius of the badge. */
+		cornerRadius: UDim;
+		/** Border color of the badge. */
+		borderColor: Color3;
+		/** Border transparency of the badge. */
+		borderTransparency: number;
+	};
+
+	/** Appearance of the {@link Tooltip} component. */
+	tooltip: {
+		/** Background color of the tooltip. */
+		backgroundColor: Color3;
+		/** Background transparency of the tooltip. */
+		backgroundTransparency: number;
+		/** Text color inside the tooltip. */
+		textColor: Color3;
+		/** Font size of the tooltip text. */
+		textSize: number;
+		/** Font face of the tooltip text. */
+		fontFace: Font;
+		/** Corner radius of the tooltip. */
+		cornerRadius: UDim;
+		/** Border color of the tooltip. */
+		borderColor: Color3;
+		/** Border transparency of the tooltip. */
+		borderTransparency: number;
+		/** Border thickness of the tooltip. */
+		borderSize: number;
+		/** Horizontal padding inside the tooltip. */
+		paddingX: number;
+		/** Vertical padding inside the tooltip. */
+		paddingY: number;
+		/** Delay in milliseconds before the tooltip appears. */
+		delayMs: number;
+	};
+
+	/** Appearance of the {@link CustomDropdown} component. */
+	customDropdown: {
+		/** Background color of the custom dropdown. */
+		backgroundColor: Color3;
+		/** Background transparency of the custom dropdown. */
+		backgroundTransparency: number;
+		/** Corner radius of the custom dropdown. */
+		cornerRadius: UDim;
+		/** Thickness of the custom dropdown border. */
+		borderSize: number;
+		/** Color of the custom dropdown border. */
+		borderColor: Color3;
+		/** Transparency of the custom dropdown border. */
+		borderTransparency: number;
+		/** Position of the custom dropdown relative to its parent. */
+		position: UDim2;
 	};
 }
 
@@ -137,6 +222,12 @@ export const DefaultStylesheet: Stylesheet = {
 		toggleStateOnClick: true,
 		static: false,
 		disabled: false,
+		toggleKey: Enum.KeyCode.Unknown,
+		notificationCount: 0,
+		iconWidth: 0,
+		contentPaddingX: 6,
+		contentPaddingY: 6,
+		imageToTextSpacing: 6,
 		selected: noop,
 		deselected: noop,
 		stateChanged: noop,
@@ -179,17 +270,18 @@ export const DefaultStylesheet: Stylesheet = {
 	},
 	sizing: {
 		iconHeight: undefined,
+		iconWidth: undefined,
 		imagePadding: 6,
 		labelPadding: 6,
 		imageToTextSpacing: 6,
 		iconHorizontalPadding: 6,
 		iconVerticalPadding: 6,
+		contentPaddingX: 6,
+		contentPaddingY: 6,
 		textMeasurementWidth: 99999,
 		minLabelWidthPadding: 12,
 		buttonLabelHeightFraction: 0.8,
-		/** Transparency of the dimming overlay when an icon is disabled (0 = fully visible, 1 = fully hidden) */
 		disabledOverlayTransparency: 0.55,
-		/** Color of the dimming overlay when an icon is disabled */
 		disabledOverlayColor: new Color3(0, 0, 0),
 	},
 	dropdownTheme: {
@@ -204,5 +296,45 @@ export const DefaultStylesheet: Stylesheet = {
 	animation: {
 		dropdownTransitionSpeed: 10,
 		stateSpring: { tension: 400 },
+		hoverEnabled: true,
+		hoverLift: 2,
+	},
+
+	notification: {
+		backgroundColor: new Color3(1, 0.2, 0.2),
+		backgroundTransparency: 0.1,
+		textColor: new Color3(1, 1, 1),
+		textSize: 13,
+		fontFace: new Font('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+		position: new UDim2(1, -12, 0, -1),
+		size: new UDim2(0, 20, 0, 20),
+		cornerRadius: new UDim(1, 0),
+		borderColor: new Color3(1, 1, 1),
+		borderTransparency: 0.5,
+	},
+
+	tooltip: {
+		backgroundColor: new Color3(0.12, 0.12, 0.14),
+		backgroundTransparency: 0.08,
+		textColor: new Color3(1, 1, 1),
+		textSize: 12,
+		fontFace: new Font('rbxasset://fonts/families/GothamSSm.json', Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+		cornerRadius: new UDim(0, 6),
+		borderColor: new Color3(1, 1, 1),
+		borderTransparency: 0.72,
+		borderSize: 1,
+		paddingX: 8,
+		paddingY: 6,
+		delayMs: 200,
+	},
+
+	customDropdown: {
+		backgroundColor: new Color3(0.12, 0.12, 0.14),
+		backgroundTransparency: 0.08,
+		cornerRadius: new UDim(0, 6),
+		borderSize: 1,
+		borderColor: new Color3(1, 1, 1),
+		borderTransparency: 0.72,
+		position: UDim2.fromScale(0, 1),
 	},
 };

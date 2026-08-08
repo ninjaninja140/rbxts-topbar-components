@@ -1,7 +1,7 @@
 import { type SpringOptions, config } from '@rbxts/ripple';
 
 export const springs = {
-	...config.spring,
+	...config,
 	bubbly: { tension: 400, friction: 14 },
 	responsive: { tension: 400 },
 	gentle: { tension: 250, friction: 30 },

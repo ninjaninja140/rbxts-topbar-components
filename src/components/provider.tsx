@@ -7,8 +7,10 @@ import type { IconId } from './icon';
 
 export type SelectionMode = 'Single' | 'Multiple';
 
-// ── Dock container components ───────────────────────────────────────────────
-
+/**
+ * Anchors children to a side of the topbar.
+ * Uses a horizontal list layout with icon spacing from the stylesheet.
+ */
 function DockFrame(props: {
 	anchor: Vector2;
 	position: UDim2;
@@ -42,16 +44,12 @@ function DockFrame(props: {
 	);
 }
 
+/** Docks icons to the left side of the topbar. */
 export function LeftDock({ children }: React.PropsWithChildren) {
-	return (
-		<DockFrame
-			anchor={new Vector2(0, 0.5)}
-			position={new UDim2(0, 0, 0.5, 0)}
-			children={children}
-		/>
-	);
+	return <DockFrame anchor={new Vector2(0, 0.5)} position={new UDim2(0, 0, 0.5, 0)} children={children} />;
 }
 
+/** Docks icons to the center of the topbar. */
 export function CenterDock({ children }: React.PropsWithChildren) {
 	const stylesheet = useStylesheet().provider;
 	return (
@@ -65,6 +63,7 @@ export function CenterDock({ children }: React.PropsWithChildren) {
 	);
 }
 
+/** Docks icons to the right side of the topbar. */
 export function RightDock({ children }: React.PropsWithChildren) {
 	const stylesheet = useStylesheet().provider;
 	return (
@@ -77,18 +76,24 @@ export function RightDock({ children }: React.PropsWithChildren) {
 	);
 }
 
-// ── Provider ────────────────────────────────────────────────────────────────
-
 interface ProviderProps extends React.PropsWithChildren {
+	/**
+	 * How icon selection works across the topbar.
+	 * `Single` deselects all other icons when one is selected;
+	 * `Multiple` allows any number to be selected at once.
+	 */
 	selectionMode?: SelectionMode;
+	/** When `true`, shows a "Beta" label if voice chat is enabled on the client. */
 	gameVoiceChatEnabled?: boolean;
 }
 
-export function TopbarProvider({
-	selectionMode = 'Single',
-	gameVoiceChatEnabled,
-	children,
-}: ProviderProps) {
+/**
+ * Root provider for the topbar system.
+ *
+ * Must wrap all topbar components. Manages global selection state,
+ * gui inset tracking, and the topbar frame bounds.
+ */
+export function TopbarProvider({ selectionMode = 'Single', gameVoiceChatEnabled, children }: ProviderProps) {
 	const [selectedIcons, setSelectedIcons] = useState<IconId[]>([]);
 	const inset = useGuiInset();
 	const voiceChatEnabled = useVoicechatEnabled();
@@ -98,8 +103,7 @@ export function TopbarProvider({
 	const leftPadding = hasBetaLabel ? stylesheet.paddingLeft + 16 : stylesheet.paddingLeft;
 
 	const rawHeight = inset.Height - stylesheet.insetHeightOffset;
-	const frameHeight =
-		stylesheet.forceFrameHeight !== undefined ? stylesheet.forceFrameHeight : rawHeight;
+	const frameHeight = stylesheet.forceFrameHeight !== undefined ? stylesheet.forceFrameHeight : rawHeight;
 
 	debugLog(
 		`TopbarProvider frame: inset.Height=${inset.Height}, inset.Width=${inset.Width}`,
@@ -107,7 +111,7 @@ export function TopbarProvider({
 		`rawHeight=${rawHeight}`,
 		`forceFrameHeight=${stylesheet.forceFrameHeight}`,
 		`finalHeight=${frameHeight}`,
-		`sizeScale=(${stylesheet.sizeScale.X}, ${stylesheet.sizeScale.Y})`,
+		`sizeScale=(${stylesheet.sizeScale.X}, ${stylesheet.sizeScale.Y})`
 	);
 
 	return (
@@ -116,21 +120,16 @@ export function TopbarProvider({
 				type: 'provider',
 				selectedIcons: selectedIcons,
 				iconSelected: (iconId) => {
-					if (selectionMode === 'Single') {
-						return setSelectedIcons([iconId]);
-					}
+					if (selectionMode === 'Single') return setSelectedIcons([iconId]);
 					return setSelectedIcons((icons) => [...icons, iconId]);
 				},
 				iconDeselected: (iconId) => {
-					if (selectionMode === 'Single' && selectedIcons.includes(iconId)) {
-						return setSelectedIcons([]);
-					}
+					if (selectionMode === 'Single' && selectedIcons.includes(iconId)) return setSelectedIcons([]);
 					return setSelectedIcons((icons) => icons.filter((T) => T !== iconId));
 				},
 			}}
 		>
 			<frame
-				key={'TopbarProvider'}
 				BackgroundTransparency={stylesheet.backgroundTransparency}
 				BackgroundColor3={stylesheet.backgroundColor}
 				Size={UDim2.fromOffset(inset.Width * stylesheet.sizeScale.X, frameHeight * stylesheet.sizeScale.Y)}
@@ -138,7 +137,6 @@ export function TopbarProvider({
 				Position={stylesheet.position}
 			>
 				<uipadding
-					key={'UIPadding'}
 					PaddingLeft={new UDim(0, leftPadding)}
 					PaddingRight={new UDim(0, stylesheet.paddingRight)}
 					PaddingTop={new UDim(0, stylesheet.paddingTop)}
