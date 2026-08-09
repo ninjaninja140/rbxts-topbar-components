@@ -10,9 +10,7 @@ export function useToggleKey(keycode: Enum.KeyCode, callback: () => void) {
 	useEffect(() => {
 		const connection = UserInputService.InputBegan.Connect((input, gameProcessed) => {
 			if (gameProcessed) return;
-			if (input.KeyCode === keycode) {
-				callback();
-			}
+			if (input.KeyCode === keycode) callback();
 		});
 
 		return () => connection.Disconnect();

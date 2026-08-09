@@ -1,14 +1,7 @@
 import { deepEquals } from '@rbxts/object-utils';
-import {
-	mapBinding,
-	useAsyncEffect,
-	useMotion,
-	useMountEffect,
-	useUnmountEffect,
-	useUpdateEffect,
-} from '@rbxts/pretty-react-hooks';
+import { mapBinding, useMotion, useMountEffect, useUnmountEffect, useUpdateEffect } from '@rbxts/pretty-react-hooks';
 import React, { useBinding, useEffect, useRef, useState } from '@rbxts/react';
-import type { Animatable } from '@rbxts/ripple';
+import type { MotionGoal } from '@rbxts/ripple';
 import { TextService } from '@rbxts/services';
 import { LocationContext, useLocation, useStylesheet } from '../context';
 import { useAnimateableProps } from '../hooks/use-animateable-props';
@@ -38,6 +31,8 @@ export interface IconProps extends React.PropsWithChildren {
 	textColor?: StateDependent<Color3>;
 	/** Transparency of the icon image. Animated on state change. */
 	imageTransparency?: StateDependent<number>;
+	/** Transparency of the label text. Animated on state change. */
+	textTransparency?: StateDependent<number>;
 	/** Layout order used for horizontal sorting in docks. */
 	layoutOrder?: StateDependent<number>;
 	/** Text displayed next to or instead of the image. */
@@ -110,9 +105,15 @@ export interface IconProps extends React.PropsWithChildren {
 	playSound?: (id: string) => void;
 }
 
-type ValidKeys = ExtractKeys<Required<IconProps>, StateDependent<Animatable>>;
+type ValidKeys = ExtractKeys<Required<IconProps>, StateDependent<MotionGoal>>;
 
-const ANIMATEABLE = ['backgroundColor', 'backgroundTransparency', 'imageColor', 'imageTransparency'] as const;
+const ANIMATEABLE = [
+	'backgroundColor',
+	'backgroundTransparency',
+	'imageColor',
+	'imageTransparency',
+	'textTransparency',
+] as const;
 
 /** Icon select/deselect state. */
 export type IconState = 'selected' | 'deselected';
@@ -218,7 +219,7 @@ export function Icon(componentProps: IconProps) {
 	const currentText = stateful(props.text, currentState);
 	const previousQueryRef = useRef<{ Font: Font; Size: number; Text: string }>();
 
-	useAsyncEffect(async () => {
+	useEffect(() => {
 		const currentQuery = {
 			Font: stateful(props.fontFace, currentState),
 			Size: stateful(props.textSize, currentState),
@@ -233,7 +234,8 @@ export function Icon(componentProps: IconProps) {
 		params.Size = stateful(props.textSize, currentState);
 		params.Width = sizing.textMeasurementWidth;
 
-		setTextBounds(TextService.GetTextBoundsAsync(params));
+		const bounds = TextService.GetTextBoundsAsync(params);
+		setTextBounds(bounds);
 		previousQueryRef.current = currentQuery;
 	}, [currentText, props.fontFace, props.textSize, currentState]);
 
@@ -247,20 +249,14 @@ export function Icon(componentProps: IconProps) {
 
 	const imageSize = iconHeight - contentPadY * 2 + imageSizeOff;
 
-	const minLabelWidth =
-		location.type === 'dropdown'
-			? location.desiredIconWidth - sizing.minLabelWidthPadding
-			: inset.Height - sizing.iconHorizontalPadding * 2;
-	const accumulatedLabelWidth = currentImage ? textBounds.X : math.max(textBounds.X, minLabelWidth);
-
-	const contentWidth = currentImage ? imageSize + imageToTextGap + textBounds.X : textBounds.X;
+	const contentWidth =
+		(currentImage ? imageSize : 0) +
+		(currentImage && currentText ? imageToTextGap : 0) +
+		(currentText ? textBounds.X : 0);
 	const autoWidth = contentWidth + contentPadX * 2;
 	const iconWidth = props.iconWidth || sizing.iconWidth || math.max(iconHeight, autoWidth);
 
 	const iconSize = new Vector2(iconWidth, iconHeight);
-	const imagePosY = (iconHeight - imageSize) / 2 + imageSizeOff * -0.5;
-
-	const textLabelPos = new UDim2(0, currentImage ? contentPadX + imageSize + imageToTextGap : contentPadX, 0.5, 0);
 
 	useEffect(() => {
 		if (props.static) return;
@@ -305,6 +301,9 @@ export function Icon(componentProps: IconProps) {
 					Active={!props.static}
 					Selectable={!props.static}
 					AutoButtonColor={!props.static}
+					Text={''}
+					BackgroundTransparency={animatedProps.backgroundTransparency as never}
+					BackgroundColor3={animatedProps.backgroundColor as never}
 					Event={{
 						MouseButton1Click: () => {
 							if (props.static) return;
@@ -336,44 +335,55 @@ export function Icon(componentProps: IconProps) {
 							props.unhover();
 						},
 					}}
-					Text={''}
-					BackgroundTransparency={stateful(props.backgroundTransparency, currentState) as unknown as number}
-					BackgroundColor3={stateful(props.backgroundColor, currentState)}
 				>
-					{children}
-					{currentImage !== undefined && currentImage !== '' && (
-						<imagelabel
-							Size={UDim2.fromOffset(imageSize, imageSize)}
-							Position={UDim2.fromOffset(contentPadX, imagePosY)}
-							Image={currentImage}
-							BackgroundTransparency={1}
-							ImageColor3={stateful(props.imageColor, currentState) as unknown as Color3}
-							ImageTransparency={stateful(props.imageTransparency, currentState) as unknown as number}
-							ImageRectOffset={stateful(props.imageRectOffset, currentState)}
-							ImageRectSize={stateful(props.imageRectSize, currentState)}
+					<uipadding
+						PaddingLeft={new UDim(0, contentPadX)}
+						PaddingRight={new UDim(0, contentPadX)}
+						PaddingTop={new UDim(0, contentPadY)}
+						PaddingBottom={new UDim(0, contentPadY)}
+					/>
+					<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
+						<uilistlayout
+							FillDirection={Enum.FillDirection.Horizontal}
+							VerticalAlignment={Enum.VerticalAlignment.Center}
+							HorizontalAlignment={Enum.HorizontalAlignment.Center}
+							Padding={new UDim(0, imageToTextGap)}
+							SortOrder={Enum.SortOrder.LayoutOrder}
 						/>
-					)}
-					{currentText !== undefined && currentText !== '' && (
-						<textlabel
-							FontFace={stateful(props.fontFace, currentState)}
-							TextSize={stateful(props.textSize, currentState)}
-							TextColor3={stateful(props.textColor, currentState)}
-							TextWrapped={false}
-							AnchorPoint={new Vector2(0, 0.5)}
-							Size={new UDim2(0, accumulatedLabelWidth, sizing.buttonLabelHeightFraction, 0)}
-							Position={textLabelPos}
-							TextXAlignment={stateful(props.textAlignment, currentState)}
-							RichText={stateful(props.richText, currentState)}
-							BackgroundTransparency={1}
-							Text={currentText}
-						>
-							<uistroke
-								Thickness={stateful(props.strokeThickness, currentState)}
-								Color={stateful(props.strokeColor, currentState)}
-								Transparency={stateful(props.strokeTransparency, currentState)}
+						{currentImage !== undefined && currentImage !== '' && (
+							<imagelabel
+								Size={UDim2.fromOffset(imageSize, imageSize)}
+								Image={currentImage}
+								BackgroundTransparency={1}
+								ImageColor3={animatedProps.imageColor as never}
+								ImageTransparency={animatedProps.imageTransparency as never}
+								ImageRectOffset={stateful(props.imageRectOffset, currentState)}
+								ImageRectSize={stateful(props.imageRectSize, currentState)}
 							/>
-						</textlabel>
-					)}
+						)}
+						{currentText !== undefined && currentText !== '' && (
+							<textlabel
+								FontFace={stateful(props.fontFace, currentState)}
+								TextSize={stateful(props.textSize, currentState)}
+								TextColor3={stateful(props.textColor, currentState)}
+								TextWrapped={false}
+								Size={UDim2.fromOffset(textBounds.X, 0)}
+								AutomaticSize={Enum.AutomaticSize.Y}
+								TextXAlignment={stateful(props.textAlignment, currentState)}
+								RichText={stateful(props.richText, currentState)}
+								BackgroundTransparency={1}
+								TextTransparency={animatedProps.textTransparency as never}
+								Text={currentText}
+							>
+								<uistroke
+									Thickness={stateful(props.strokeThickness, currentState)}
+									Color={stateful(props.strokeColor, currentState)}
+									Transparency={stateful(props.strokeTransparency, currentState)}
+								/>
+							</textlabel>
+						)}
+					</frame>
+					{children}
 					<uicorner
 						CornerRadius={
 							location.type === 'dropdown'
@@ -390,10 +400,10 @@ export function Icon(componentProps: IconProps) {
 							ZIndex={10}
 						/>
 					)}
-					{componentProps.notificationCount !== undefined && (
-						<Notification count={componentProps.notificationCount} />
-					)}
 				</textbutton>
+				{componentProps.notificationCount !== undefined && (
+					<Notification count={componentProps.notificationCount} />
+				)}
 			</frame>
 		</LocationContext.Provider>
 	);

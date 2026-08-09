@@ -1,6 +1,7 @@
 import object from '@rbxts/object-utils';
 import { useMotion, usePrevious } from '@rbxts/pretty-react-hooks';
 import { type Binding, useEffect } from '@rbxts/react';
+import type { Motion, MotionGoal } from '@rbxts/ripple';
 import type { FromStateDependent, IconState, StateDependent } from '../components/icon';
 import { stateful } from '../utilities/resolve-state-dependent';
 import { springs } from '../utilities/springs';
@@ -18,22 +19,26 @@ export function useAnimateableProps<T extends Record<string, StateDependent<unkn
 	...keys: K[]
 ) {
 	const previousProps = usePrevious(props);
-	const motions: LuaTuple<[Binding<unknown>, unknown]>[] = [];
+	const previousState = usePrevious(state);
+	const motionBindings: Binding<MotionGoal>[] = [];
+	const motionControls: Motion<MotionGoal>[] = [];
 
-	for (const key of keys) motions.push(useMotion(stateful(props[key], state) as never) as never);
+	for (const key of keys) {
+		const [binding, motion] = useMotion(stateful(props[key], state) as MotionGoal);
+		motionBindings.push(binding);
+		motionControls.push(motion);
+	}
 
 	useEffect(() => {
-		for (const key of keys) {
+		for (let i = 0; i < keys.size(); i++) {
+			const key = keys[i];
 			const value = stateful(props[key], state);
-			const previousValue = stateful(previousProps, state);
+			const previousValue = previousProps && previousState !== undefined ? stateful(previousProps[key], previousState) : undefined;
 			if (value === previousValue) continue;
 
-			(motions[keys.indexOf(key)][1] as { spring: (goal: unknown, opts?: object) => void }).spring(
-				value,
-				springs.responsive
-			);
+			motionControls[i].spring(value as MotionGoal, springs.responsive);
 		}
-	}, [props]);
+	}, [props, state]);
 
-	return object.fromEntries(keys.map((key) => [key, motions[keys.indexOf(key)][0]])) as Result<T, K>;
+	return object.fromEntries(keys.map((key, i) => [key, motionBindings[i]])) as Result<T, K>;
 }
