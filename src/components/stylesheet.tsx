@@ -1,7 +1,7 @@
 import React from '@rbxts/react';
 import { StylesheetContext } from '../context';
 import { DefaultStylesheet, type Stylesheet as StylesheetType } from '../style';
-import reconcile from '../utilities/merge';
+import { reconcile } from '../utilities/merge';
 import type { DeepPartial } from '../utilities/types';
 
 interface Props extends React.PropsWithChildren {

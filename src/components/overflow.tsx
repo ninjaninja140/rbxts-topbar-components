@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from '@rbxts/react';
 import { useStylesheet } from '../context';
-import { Icon } from './icon';
+import { Icon, type IconState } from './icon';
 
 /**
  * Collects child icons and renders a "more" button (⋯) when they overflow
@@ -19,19 +19,18 @@ export function Overflow({ children }: { children: React.ReactNode }) {
 
 	const overflowCount = childArray.size();
 
-	const handleToggle = useCallback(() => {
-		setExpanded((prev) => !prev);
+	const handleToggle = useCallback((state: IconState) => {
+		setExpanded(state === 'selected');
 	}, []);
 
-	if (overflowCount === 0) {
-		return <React.Fragment />;
-	}
+	if (overflowCount === 0) return <React.Fragment />;
 
 	return (
 		<Icon
-			imageId="rbxassetid://6069276526"
-			static={false}
+			imageId='rbxassetid://6069276526'
 			toggleStateOnClick={true}
+			defaultState='deselected'
+			stateChanged={handleToggle}
 			contentPaddingX={4}
 			contentPaddingY={4}
 		>
@@ -51,10 +50,7 @@ export function Overflow({ children }: { children: React.ReactNode }) {
 						Transparency={stylesheet.dropdownTheme.borderTransparency}
 						Thickness={stylesheet.dropdownTheme.borderSize}
 					/>
-					<uilistlayout
-						SortOrder={Enum.SortOrder.LayoutOrder}
-						Padding={new UDim(0, 2)}
-					/>
+					<uilistlayout SortOrder={Enum.SortOrder.LayoutOrder} Padding={new UDim(0, 2)} />
 					{childArray}
 				</frame>
 			)}

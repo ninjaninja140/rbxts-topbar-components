@@ -103,6 +103,12 @@ export interface IconProps extends React.PropsWithChildren {
 	onRightClick?: () => void;
 	/** Function used to play click sounds. Receives the sound asset ID. */
 	playSound?: (id: string) => void;
+	/**
+	 * When placed as a direct child of `TopbarProvider`, this controls
+	 * which dock the icon is automatically routed to.
+	 * Defaults to `"left"`.
+	 */
+	position?: 'left' | 'right' | 'centre';
 }
 
 type ValidKeys = ExtractKeys<Required<IconProps>, StateDependent<MotionGoal>>;

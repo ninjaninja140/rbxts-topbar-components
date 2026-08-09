@@ -55,32 +55,30 @@ Instantiate `<TopbarProvider />` to be a root of your topbar component tree.
 </TopbarProvider>
 ```
 
-#### Positioning icons with dock containers
+Icons without a `position` prop default to the **left** dock.
 
-Icons placed directly inside `<TopbarProvider>` default to the left side. Use the dock container components to position icons at the center or right of the bar:
+#### Positioning icons with the `position` prop
+
+Use the `position` prop on `<Icon>` components to automatically route them into the left, centre, or right dock:
 
 ```tsx
 <TopbarProvider>
-    <LeftDock>
-        <Icon text="Home" />
-        <Icon text="Settings" />
-    </LeftDock>
-    <CenterDock>
-        <Icon text="Server Time" static />
-    </CenterDock>
-    <RightDock>
-        <Icon text="Profile" imageId="rbxassetid://..." />
-    </RightDock>
+    <Icon position="left" text="Home" />
+    <Icon position="left" text="Settings" />
+    <Icon position="centre" text="Server Time" static />
+    <Icon position="right" text="Profile" imageId="rbxassetid://..." />
 </TopbarProvider>
 ```
 
-| Container | Anchor | Purpose |
-|---|---|---|
-| `<LeftDock>` | left edge | Default - icons flow left-to-right from the left |
-| `<CenterDock>` | center (50%) | Centers icons in the bar |
-| `<RightDock>` | right edge | Right-aligns icons |
+All three docks render automatically — no manual dock wrappers needed.
 
-Each dock container renders its own horizontal list with the configured `iconSpacing` and vertical centering. Center and right docks automatically apply `iconGroupSpacing` for visual separation.
+| Position | Behaviour |
+|---|---|
+| `"left"` (default) | Icons flow left-to-right from the left edge |
+| `"centre"` | Centers icons in the bar |
+| `"right"` | Right-aligns icons |
+
+Dock containers (`<LeftDock>`, `<CenterDock>`, `<RightDock>`) are still available for advanced layouts requiring nested structure.
 
 #### Icon props: `static` and `disabled`
 
@@ -192,24 +190,36 @@ Use `<CustomDropdown>` when you need to show rich, arbitrary content in a dropdo
 
 Appearance is controlled via `stylesheet.customDropdown`.
 
-#### Overflow handler
+#### Automatic overflow
 
-When you have many icons in a dock, wrap them in `<Overflow>` to automatically collapse extras into a "more" (⋯) dropdown:
+`TopbarProvider` accepts an `overflowAmount` prop that caps the visible icons per dock:
+
+```tsx
+<TopbarProvider overflowAmount={4}>
+    <Icon text="Home" />
+    <Icon text="Settings" />
+    <Icon text="Profile" />
+    <Icon text="Messages" />
+    <Icon text="Help" />
+    {/* Icons beyond 4 in any dock collapse into a "⋯" overflow menu */}
+</TopbarProvider>
+```
+
+When `overflowAmount` is **omitted**, the provider automatically detects whether icons from different docks overlap and progressively overflows them to prevent visual collisions. Icons moved into overflow appear in a dropdown behind the "⋯" button.
+
+#### Manual overflow
+
+For advanced cases, you can still wrap icons directly in `<Overflow>` inside a dock container:
 
 ```tsx
 <LeftDock>
     <Overflow>
         <Icon text="Home" />
         <Icon text="Settings" />
-        <Icon text="Profile" />
-        <Icon text="Messages" />
-        <Icon text="Help" />
         {/* ... many more ... */}
     </Overflow>
 </LeftDock>
 ```
-
-Based on TopbarPlus v3's overflow handler.
 
 ### Stylesheets
 

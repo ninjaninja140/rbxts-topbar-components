@@ -237,6 +237,7 @@ export const DefaultStylesheet: Stylesheet = {
 		hover: noop,
 		unhover: noop,
 		children: [],
+		position: 'left',
 	},
 	dropdown: {
 		maxWidth: 300,

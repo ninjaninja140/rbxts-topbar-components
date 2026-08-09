@@ -1,6 +1,6 @@
 type Table = Record<string, unknown>;
 
-export default function reconcile(target: object, template: object): object {
+export function reconcile(target: object, template: object): object {
 	const t = target as Table;
 	const tmpl = template as Table;
 
