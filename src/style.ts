@@ -49,6 +49,12 @@ export interface Stylesheet {
 		iconGroupSpacing: number;
 		/** Override for the topbar frame height. Uses inset height when `undefined`. */
 		forceFrameHeight: number | undefined;
+		/**
+		 * Pixel offset that shifts the centre dock to the right to visually
+		 * account for Roblox's default left-side CoreGui icons (menu button,
+		 * chips bar, etc.). Auto-detected from the topbar type when `undefined`.
+		 */
+		centreOffset: number | undefined;
 	};
 
 	/** Sizing and spacing values shared by all icons. */
@@ -223,7 +229,7 @@ export const DefaultStylesheet: Stylesheet = {
 		toggleStateOnClick: true,
 		static: false,
 		disabled: false,
-		toggleKey: Enum.KeyCode.Unknown,
+		toggleKey: Enum.KeyCode.None,
 		notificationCount: 0,
 		iconWidth: 0,
 		contentPaddingX: 10,
@@ -269,6 +275,7 @@ export const DefaultStylesheet: Stylesheet = {
 		insetHeightOffset: 0,
 		iconGroupSpacing: 0,
 		forceFrameHeight: undefined,
+		centreOffset: -80, // auto-detected when undefined
 	},
 	sizing: {
 		iconHeight: undefined,

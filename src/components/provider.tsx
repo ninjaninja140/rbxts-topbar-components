@@ -62,13 +62,17 @@ function LeftDock({ children, frameRef }: React.PropsWithChildren & { frameRef?:
 }
 
 /** Docks icons to the center of the topbar. */
-function CenterDock({ children, frameRef }: React.PropsWithChildren & { frameRef?: React.Ref<Frame> }) {
+function CenterDock({
+	children,
+	frameRef,
+	centreOffset = 0,
+}: React.PropsWithChildren & { frameRef?: React.Ref<Frame>; centreOffset?: number }) {
 	const stylesheet = useStylesheet().provider;
 	return (
 		<DockFrame
 			frameRef={frameRef}
 			anchor={new Vector2(0.5, 0.5)}
-			position={new UDim2(0.5, 0, 0.5, 0)}
+			position={new UDim2(0.5, centreOffset, 0.5, 0)}
 			paddingLeft={new UDim(0, stylesheet.iconGroupSpacing)}
 			paddingRight={new UDim(0, stylesheet.iconGroupSpacing)}
 			children={children}
@@ -128,6 +132,22 @@ export function TopbarProvider({
 	const inset = useGuiInset();
 	const voiceChatEnabled = useVoicechatEnabled();
 	const stylesheet = useStylesheet().provider;
+
+	/**
+	 * Pixel offset that shifts the centre dock right to visually account for
+	 * Roblox's default left-side CoreGui icons (menu button, chips bar, etc.).
+	 *
+	 * Mirrors TopbarPlus's startInset logic:
+	 * - New topbar (height > 36): no offset — icons are mathematically centered
+	 * - Old topbar (height ≤ 36): 12px offset to account for the classic menu button
+	 *
+	 * Set `centreOffset` explicitly in the stylesheet to override.
+	 */
+	const centreOffset = useMemo(() => {
+		if (stylesheet.centreOffset !== undefined) return stylesheet.centreOffset;
+		const isOldTopbar = inset.Height <= 36;
+		return isOldTopbar ? 12 : 0;
+	}, [stylesheet.centreOffset, inset.Height]);
 
 	const containerRef = useRef<Frame>();
 	const leftDockRef = useRef<Frame>();
@@ -302,7 +322,7 @@ export function TopbarProvider({
 					PaddingBottom={new UDim(0, stylesheet.paddingBottom)}
 				/>
 				<LeftDock frameRef={leftDockRef}>{buildDockContent(sorted.groups.left, 'left')}</LeftDock>
-				<CenterDock frameRef={centerDockRef}>{buildDockContent(sorted.groups.centre, 'centre')}</CenterDock>
+				<CenterDock frameRef={centerDockRef} centreOffset={centreOffset}>{buildDockContent(sorted.groups.centre, 'centre')}</CenterDock>
 				<RightDock frameRef={rightDockRef}>{buildDockContent(sorted.groups.right, 'right')}</RightDock>
 				{sorted.other}
 			</frame>

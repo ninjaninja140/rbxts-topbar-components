@@ -289,6 +289,7 @@ The stylesheet exposes the following sections for full control:
         sizeScale: new Vector2(1, 1),
         insetHeightOffset: 0,
         forceFrameHeight: undefined,  // override auto height (e.g. 55)
+        centreOffset: undefined,       // right-shift for centre dock (auto: 0 on new topbar, 12 on old)
     },
 
     // Icon internal sizing
