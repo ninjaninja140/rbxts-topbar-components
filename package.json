@@ -1,6 +1,6 @@
 {
 	"name": "@nrbx/topbar-components",
-	"version": "1.2.3",
+	"version": "1.2.4",
 	"main": "out/init.luau",
 	"scripts": {
 		"build": "rbxtsc",
@@ -32,10 +32,10 @@
 		"access": "public"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.7",
+		"@biomejs/biome": "^2.5.8",
 		"@rbxts/compiler-types": "^3.0.0-types.0",
 		"@rbxts/react": "^17.3.7-ts.2",
-		"@rbxts/types": "^1.0.942",
+		"@rbxts/types": "^1.0.943",
 		"roblox-ts": "^3.0.0",
 		"typescript": "^6.0.3"
 	},

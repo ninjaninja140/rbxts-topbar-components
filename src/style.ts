@@ -264,7 +264,7 @@ export const DefaultStylesheet: Stylesheet = {
 	provider: {
 		paddingLeft: 8,
 		paddingRight: 12,
-		paddingTop: 11,
+		paddingTop: 12,
 		paddingBottom: 0,
 		iconSpacing: 12,
 		backgroundTransparency: 1,
