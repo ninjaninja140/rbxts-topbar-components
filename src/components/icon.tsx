@@ -57,6 +57,12 @@ export interface IconProps extends React.PropsWithChildren {
 	rightClickSound?: StateDependent<string>;
 	/** Corner radius of the button. */
 	cornerRadius?: StateDependent<UDim>;
+	/** Border thickness of the button in pixels. */
+	borderSize?: StateDependent<number>;
+	/** Border color of the button. */
+	borderColor?: StateDependent<Color3>;
+	/** Border transparency of the button (1 = fully transparent, 0 = opaque). */
+	borderTransparency?: StateDependent<number>;
 	/** Stroke transparency of the label text. */
 	strokeTransparency?: StateDependent<number>;
 	/** Stroke color of the label text. */
@@ -325,6 +331,7 @@ export function Icon(componentProps: IconProps) {
 					Selectable={!props.static}
 					AutoButtonColor={!props.static}
 					Text={''}
+					BorderSizePixel={0}
 					BackgroundTransparency={animatedProps.backgroundTransparency as never}
 					BackgroundColor3={animatedProps.backgroundColor as never}
 					Event={{
@@ -423,6 +430,11 @@ export function Icon(componentProps: IconProps) {
 								? stylesheet.dropdown.iconCornerRadius
 								: stateful(props.cornerRadius, currentState)
 						}
+					/>
+					<uistroke
+						Thickness={stateful(props.borderSize, currentState)}
+						Color={stateful(props.borderColor, currentState)}
+						Transparency={stateful(props.borderTransparency, currentState)}
 					/>
 					{props.disabled && (
 						<frame

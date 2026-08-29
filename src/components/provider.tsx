@@ -133,16 +133,6 @@ export function TopbarProvider({
 	const voiceChatEnabled = useVoicechatEnabled();
 	const stylesheet = useStylesheet().provider;
 
-	/**
-	 * Pixel offset that shifts the centre dock right to visually account for
-	 * Roblox's default left-side CoreGui icons (menu button, chips bar, etc.).
-	 *
-	 * Mirrors TopbarPlus's startInset logic:
-	 * - New topbar (height > 36): no offset — icons are mathematically centered
-	 * - Old topbar (height ≤ 36): 12px offset to account for the classic menu button
-	 *
-	 * Set `centreOffset` explicitly in the stylesheet to override.
-	 */
 	const centreOffset = useMemo(() => {
 		if (stylesheet.centreOffset !== undefined) return stylesheet.centreOffset;
 		const isOldTopbar = inset.Height <= 36;
@@ -160,7 +150,7 @@ export function TopbarProvider({
 		right: 0,
 	});
 
-	/** Sort direct children into docks based on the `position` prop. Defaults to left. */
+	// Sort direct children into docks based on the `position` prop. Defaults to left.
 	const sorted = useMemo(() => {
 		const groups: Record<DockPosition, React.ReactElement[]> = { left: [], centre: [], right: [] };
 		const other: React.ReactElement[] = [];
@@ -198,11 +188,6 @@ export function TopbarProvider({
 			const containerWidth = container.AbsoluteSize.X;
 			const groupSpacing = stylesheet.iconGroupSpacing;
 
-			// AbsolutePosition is the frame's top-left corner (after the anchor
-			// point is applied), so the dock edges are:
-			// - left dock:  [X, X + W]
-			// - centre dock: [X, X + W] (X is already centreX - W/2)
-			// - right dock: [X, X + W] (X is already W - padding - W)
 			const leftRightEdge = leftFrame.AbsolutePosition.X + leftFrame.AbsoluteSize.X;
 			const centerLeftEdge = centerFrame.AbsolutePosition.X;
 			const centerRightEdge = centerFrame.AbsolutePosition.X + centerFrame.AbsoluteSize.X;
@@ -224,12 +209,6 @@ export function TopbarProvider({
 				const overflowPixels = centerRightEdge + overlapThreshold - rightLeftEdge;
 				const iconEstimate = 52;
 				const totalOverflow = math.max(1, math.ceil(overflowPixels / iconEstimate));
-
-				// Only place a "more" button in a dock that actually has icons.
-				// Splitting unconditionally gives an empty centre dock a phantom
-				// ⋯ button, which widens the centre dock, shifts its position,
-				// and re-triggers this measurement — the feedback loop that makes
-				// the topbar flap. Empty dock → push all overflow to the other.
 				const centreCount = sorted.groups.centre.size();
 				const rightCount = sorted.groups.right.size();
 

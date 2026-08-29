@@ -198,6 +198,9 @@ export const DefaultStylesheet: Stylesheet = {
 		strokeTransparency: 0,
 		textAlignment: Enum.TextXAlignment.Left,
 		cornerRadius: new UDim(1, 0),
+		borderSize: 0,
+		borderColor: new Color3(0, 0, 0),
+		borderTransparency: 1,
 		textColor: {
 			deselected: Color3.fromRGB(255, 255, 255),
 			selected: Color3.fromRGB(57, 60, 65),

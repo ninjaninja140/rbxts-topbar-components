@@ -274,6 +274,8 @@ The stylesheet exposes the following sections for full control:
         backgroundColor: { selected: Color3.fromRGB(245, 245, 245), deselected: Color3.fromRGB(0, 0, 0) },
         backgroundTransparency: 0.3,
         cornerRadius: new UDim(1, 0),
+        borderSize: 0,            borderColor: new Color3(0, 0, 0),
+        borderTransparency: 1,
         fontFace: new Font("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
         static: false,
         disabled: false,
