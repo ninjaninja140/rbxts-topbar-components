@@ -1,32 +1,21 @@
 {
 	"name": "@nrbx/topbar-components",
-	"version": "1.2.4",
+	"version": "1.3.0",
 	"main": "out/init.luau",
 	"scripts": {
 		"build": "rbxtsc",
 		"watch": "rbxtsc -w",
 		"prepublishOnly": "npm run build"
 	},
-	"keywords": [
-		"roblox-ts",
-		"rbxts",
-		"nn140",
-		"nrbx",
-		"topbar-plus"
-	],
+	"keywords": ["roblox-ts", "rbxts", "nn140", "nrbx", "topbar-plus"],
 	"author": "ninjaninja140",
 	"license": "MIT",
 	"description": "@rbxts/react component package mimicking topbar-plus with extra functionality, forked from @rbxts/topbar-components",
 	"types": "out/index.d.ts",
-	"files": [
-		"out",
-		"README.md",
-		"LICENSE.txt",
-		"!**/*.tsbuildinfo"
-	],
+	"files": ["out", "README.md", "LICENSE.txt", "!**/*.tsbuildinfo"],
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ninjaninja140/rbxts-topbar-components.git"
+		"url": "git+https://github.com/nrbx-ts/rbxts-topbar-components.git"
 	},
 	"publishConfig": {
 		"access": "public"

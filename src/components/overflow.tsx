@@ -28,7 +28,7 @@ export function Overflow({ children }: { children: React.ReactNode }) {
 	return (
 		<Icon
 			imageId='rbxassetid://6069276526'
-			toggleStateOnClick={true}
+			toggle
 			defaultState='deselected'
 			stateChanged={handleToggle}
 			contentPaddingX={4}

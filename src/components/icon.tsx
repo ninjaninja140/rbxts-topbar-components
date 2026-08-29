@@ -67,8 +67,12 @@ export interface IconProps extends React.PropsWithChildren {
 	textAlignment?: StateDependent<Enum.TextXAlignment>;
 	/** Whether the label supports rich text markup. */
 	richText?: StateDependent<boolean>;
-	/** When `true`, clicking the icon toggles between selected and deselected. */
-	toggleStateOnClick?: boolean;
+	/**
+	 * When `true`, clicking the icon toggles between selected and deselected.
+	 * When `false` (the default), clicking briefly lights the icon up and fires
+	 * {@link onClick} once without changing the selection state.
+	 */
+	toggle?: boolean;
 	/** When `true`, the icon ignores all clicks, hover, and state changes. */
 	static?: boolean;
 	/** When `true`, the icon is dimmed and non-interactive. */
@@ -97,7 +101,7 @@ export interface IconProps extends React.PropsWithChildren {
 	unhover?: () => void;
 	/** Callback fired whenever the state changes (receives the new state). */
 	stateChanged?: (state: IconState) => void;
-	/** Callback fired on left click (in addition to the built-in toggle). */
+	/** Callback fired on left click. */
 	onClick?: () => void;
 	/** Callback fired on right click. */
 	onRightClick?: () => void;
@@ -118,8 +122,11 @@ const ANIMATEABLE = [
 	'backgroundTransparency',
 	'imageColor',
 	'imageTransparency',
+	'textColor',
 	'textTransparency',
 ] as const;
+
+const FLASH_DURATION = 0.35;
 
 /** Icon select/deselect state. */
 export type IconState = 'selected' | 'deselected';
@@ -149,6 +156,10 @@ export function Icon(componentProps: IconProps) {
 
 	const [currentState, setState] = useState<IconState>(componentProps.forcedState ?? 'deselected');
 
+	/** Transiently lights the icon up on a single click when not in toggle mode. */
+	const [flash, setFlash] = useState(false);
+	const flashTimer = useRef<thread>();
+
 	const [hovered, setHovered] = useState(false);
 	const [hoverLift, hoverLiftMotion] = useMotion(0);
 
@@ -166,8 +177,10 @@ export function Icon(componentProps: IconProps) {
 		...((style as Partial<Stylesheet['sizing']> | undefined) ?? {}),
 	};
 
+	const animateState: IconState = flash ? 'selected' : currentState;
+
 	const animatedProps = useAnimateableProps(
-		currentState,
+		animateState,
 		{ ...stylesheet.icon, ...componentProps } as Required<Pick<IconProps, ValidKeys>>,
 		...ANIMATEABLE
 	);
@@ -216,8 +229,7 @@ export function Icon(componentProps: IconProps) {
 	if (componentProps.toggleKey && componentProps.toggleKey !== Enum.KeyCode.Unknown) {
 		useToggleKey(componentProps.toggleKey, () => {
 			if (props.static) return;
-			if (stateful(props.toggleStateOnClick, currentState))
-				setState(currentState === 'deselected' ? 'selected' : 'deselected');
+			if (props.toggle) setState(currentState === 'deselected' ? 'selected' : 'deselected');
 		});
 	}
 
@@ -275,6 +287,10 @@ export function Icon(componentProps: IconProps) {
 	}, [currentState, contentSize.Y, dropdownAnimating, iconSize]);
 
 	useUnmountEffect(() => {
+		if (flashTimer.current) task.cancel(flashTimer.current);
+	});
+
+	useUnmountEffect(() => {
 		if (props.static) return;
 		if (location.type !== 'dropdown') return;
 		location.removeChild(id);
@@ -313,8 +329,18 @@ export function Icon(componentProps: IconProps) {
 					Event={{
 						MouseButton1Click: () => {
 							if (props.static) return;
-							if (stateful(props.toggleStateOnClick, currentState))
+
+							if (props.toggle) {
 								setState(currentState === 'deselected' ? 'selected' : 'deselected');
+							} else {
+								if (flashTimer.current) task.cancel(flashTimer.current);
+								setFlash(true);
+								flashTimer.current = task.delay(FLASH_DURATION, () => {
+									flashTimer.current = undefined;
+									setFlash(false);
+								});
+							}
+
 							props.onClick();
 
 							const soundId = stateful(props.leftClickSound, currentState);
@@ -371,7 +397,7 @@ export function Icon(componentProps: IconProps) {
 							<textlabel
 								FontFace={stateful(props.fontFace, currentState)}
 								TextSize={stateful(props.textSize, currentState)}
-								TextColor3={stateful(props.textColor, currentState)}
+								TextColor3={animatedProps.textColor as never}
 								TextWrapped={false}
 								Size={UDim2.fromOffset(textBounds.X, 0)}
 								AutomaticSize={Enum.AutomaticSize.Y}

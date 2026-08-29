@@ -226,7 +226,7 @@ export const DefaultStylesheet: Stylesheet = {
 		text: '',
 		defaultState: 'deselected',
 		forcedState: 'deselected',
-		toggleStateOnClick: true,
+		toggle: false,
 		static: false,
 		disabled: false,
 		toggleKey: Enum.KeyCode.None,

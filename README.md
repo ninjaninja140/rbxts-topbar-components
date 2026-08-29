@@ -92,13 +92,27 @@ Dock containers (`<LeftDock>`, `<CenterDock>`, `<RightDock>`) are still availabl
 
 The disabled overlay transparency and color are configurable via the stylesheet `sizing` section.
 
+#### Click behaviour and the `toggle` prop
+
+By default an icon is a **single-click button**: clicking it briefly lights up the background (and darkens the label) and then animates back, firing `onClick` once. It does not change its selection state.
+
+```tsx
+<Icon text="Home" onClick={() => goHome()} />   {/* standard click button */}
+```
+
+To make an icon a persistent toggle, pass the `toggle` prop. Clicking it switches between selected and deselected: `selected` fires when toggled on (button stays lit) and `deselected` fires when toggled off.
+
+```tsx
+<Icon text="Mute" toggle selected={() => mute()} deselected={() => unmute()} />
+```
+
 #### Dropdowns
 
 You can add a dropdown to an icon by mounting `<Dropdown />` component as it's child.
 Dropdowns & TopbarProvider have a property called `selectionMode`, which lets you specify how many icons can be selected at once.
 
 ```tsx
-<Icon text="Skins">
+<Icon text="Skins" toggle>
     <Dropdown selectionMode="Single">
         <Icon text="yellow" selected={() => chooseSkin("yellow")} />
         <Icon text="red" selected={() => chooseSkin("red")} />
@@ -106,7 +120,7 @@ Dropdowns & TopbarProvider have a property called `selectionMode`, which lets yo
 </Icon>
 ```
 
-Dropdowns **can be nested.**
+Because a dropdown stays open while its parent icon is selected, the parent must opt in to toggle behaviour with the `toggle` prop. Dropdowns **can be nested.**
 
 #### Hover animations
 
@@ -141,10 +155,10 @@ Badge styling (colors, position, corner radius, border) is controlled via `style
 
 #### Toggle keys
 
-Bind a keyboard key to toggle an icon on/off with the `toggleKey` prop:
+Bind a keyboard key to toggle an icon on/off with the `toggleKey` prop (requires the `toggle` prop):
 
 ```tsx
-<Icon text="Menu" toggleKey={Enum.KeyCode.M} toggleStateOnClick />
+<Icon text="Menu" toggleKey={Enum.KeyCode.M} toggle />
 ```
 
 Any `Enum.KeyCode` value works. The key binding only activates while the icon is mounted.
@@ -172,7 +186,7 @@ Tooltip appearance (colors, font, padding, border) is controlled via `stylesheet
 Use `<CustomDropdown>` when you need to show rich, arbitrary content in a dropdown panel - not just child `<Icon>` elements:
 
 ```tsx
-<Icon text="Info" toggleStateOnClick>
+<Icon text="Info" toggle>
     <CustomDropdown width={250} maxHeight={180}>
         <textlabel Text="Custom content here!" />
         <textbutton Text="A button" />
@@ -236,7 +250,7 @@ import { Stylesheet } from "@nrbx/topbar-components";
 }}>
     <TopbarProvider>
         <LeftDock>
-            <Icon text="Skins">
+            <Icon text="Skins" toggle>
                 <Dropdown selectionMode="Single">
                     <Icon text="yellow" selected={() => chooseSkin("yellow")} />
                     <Icon text="red" selected={() => chooseSkin("red")} />
