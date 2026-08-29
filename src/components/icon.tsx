@@ -217,6 +217,7 @@ export function Icon(componentProps: IconProps) {
 
 	useUpdateEffect(() => {
 		if (props.static) return;
+		if (componentProps.forcedState) return;
 		if (currentState === 'selected' && !location.selectedIcons.includes(id)) setState('deselected');
 	}, [location.selectedIcons]);
 

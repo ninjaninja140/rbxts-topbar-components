@@ -198,10 +198,15 @@ export function TopbarProvider({
 			const containerWidth = container.AbsoluteSize.X;
 			const groupSpacing = stylesheet.iconGroupSpacing;
 
+			// AbsolutePosition is the frame's top-left corner (after the anchor
+			// point is applied), so the dock edges are:
+			// - left dock:  [X, X + W]
+			// - centre dock: [X, X + W] (X is already centreX - W/2)
+			// - right dock: [X, X + W] (X is already W - padding - W)
 			const leftRightEdge = leftFrame.AbsolutePosition.X + leftFrame.AbsoluteSize.X;
-			const centerLeftEdge = centerFrame.AbsolutePosition.X - centerFrame.AbsoluteSize.X / 2;
-			const centerRightEdge = centerFrame.AbsolutePosition.X + centerFrame.AbsoluteSize.X / 2;
-			const rightLeftEdge = rightFrame.AbsolutePosition.X - rightFrame.AbsoluteSize.X;
+			const centerLeftEdge = centerFrame.AbsolutePosition.X;
+			const centerRightEdge = centerFrame.AbsolutePosition.X + centerFrame.AbsoluteSize.X;
+			const rightLeftEdge = rightFrame.AbsolutePosition.X;
 
 			const overlapThreshold = groupSpacing + 10; // some padding
 
@@ -219,8 +224,23 @@ export function TopbarProvider({
 				const overflowPixels = centerRightEdge + overlapThreshold - rightLeftEdge;
 				const iconEstimate = 52;
 				const totalOverflow = math.max(1, math.ceil(overflowPixels / iconEstimate));
-				centreOverflow = math.ceil(totalOverflow / 2);
-				rightOverflow = totalOverflow - centreOverflow;
+
+				// Only place a "more" button in a dock that actually has icons.
+				// Splitting unconditionally gives an empty centre dock a phantom
+				// ⋯ button, which widens the centre dock, shifts its position,
+				// and re-triggers this measurement — the feedback loop that makes
+				// the topbar flap. Empty dock → push all overflow to the other.
+				const centreCount = sorted.groups.centre.size();
+				const rightCount = sorted.groups.right.size();
+
+				if (centreCount > 0 && rightCount > 0) {
+					centreOverflow = math.ceil(totalOverflow / 2);
+					rightOverflow = totalOverflow - centreOverflow;
+				} else if (rightCount > 0) {
+					rightOverflow = totalOverflow;
+				} else if (centreCount > 0) {
+					centreOverflow = totalOverflow;
+				}
 			}
 
 			if (leftRightEdge > containerWidth - 10) {
@@ -322,7 +342,9 @@ export function TopbarProvider({
 					PaddingBottom={new UDim(0, stylesheet.paddingBottom)}
 				/>
 				<LeftDock frameRef={leftDockRef}>{buildDockContent(sorted.groups.left, 'left')}</LeftDock>
-				<CenterDock frameRef={centerDockRef} centreOffset={centreOffset}>{buildDockContent(sorted.groups.centre, 'centre')}</CenterDock>
+				<CenterDock frameRef={centerDockRef} centreOffset={centreOffset}>
+					{buildDockContent(sorted.groups.centre, 'centre')}
+				</CenterDock>
 				<RightDock frameRef={rightDockRef}>{buildDockContent(sorted.groups.right, 'right')}</RightDock>
 				{sorted.other}
 			</frame>
