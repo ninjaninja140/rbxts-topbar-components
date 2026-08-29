@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useState } from '@rbxts/react';
-import { useStylesheet } from '../context';
-import { Icon, type IconState } from './icon';
+import React from '@rbxts/react';
+import { LocationContext, useLocation } from '../context';
+import { Dropdown } from './dropdown';
+import { Icon } from './icon';
 
 /**
  * Collects child icons and renders a "more" button (⋯) when they overflow
@@ -9,51 +10,47 @@ import { Icon, type IconState } from './icon';
  * Simplified from TopbarPlus v3 overflow handler.
  */
 export function Overflow({ children }: { children: React.ReactNode }) {
-	const stylesheet = useStylesheet();
-	const [expanded, setExpanded] = useState(false);
+	const childArray = React.Children.toArray(children) as React.ReactElement[];
 
-	const childArray = useMemo(() => {
-		const arr = React.Children.toArray(children) as React.ReactElement[];
-		return arr;
-	}, [children]);
-
-	const overflowCount = childArray.size();
-
-	const handleToggle = useCallback((state: IconState) => {
-		setExpanded(state === 'selected');
-	}, []);
-
-	if (overflowCount === 0) return <React.Fragment />;
+	if (childArray.size() === 0) return <React.Fragment />;
 
 	return (
 		<Icon
 			imageId='rbxassetid://6069276526'
 			toggle
 			defaultState='deselected'
-			stateChanged={handleToggle}
 			contentPaddingX={4}
 			contentPaddingY={4}
 		>
-			{expanded && (
-				<frame
-					Size={new UDim2(0, 0, 0, 0)}
-					Position={stylesheet.customDropdown.position ?? stylesheet.dropdownTheme.position}
-					BackgroundColor3={stylesheet.dropdownTheme.backgroundColor}
-					BackgroundTransparency={stylesheet.dropdownTheme.backgroundTransparency}
-					BorderSizePixel={stylesheet.dropdownTheme.borderSize}
-					BorderColor3={stylesheet.dropdownTheme.borderColor}
-					ZIndex={50}
-				>
-					<uicorner CornerRadius={stylesheet.dropdownTheme.cornerRadius} />
-					<uistroke
-						Color={stylesheet.dropdownTheme.borderColor}
-						Transparency={stylesheet.dropdownTheme.borderTransparency}
-						Thickness={stylesheet.dropdownTheme.borderSize}
-					/>
-					<uilistlayout SortOrder={Enum.SortOrder.LayoutOrder} Padding={new UDim(0, 2)} />
-					{childArray}
-				</frame>
-			)}
+			<OverflowDropdown>{childArray}</OverflowDropdown>
 		</Icon>
+	);
+}
+
+/**
+ * Mounts a {@link Dropdown} inside the overflow button without letting it
+ * resize the button's layout footprint. The overflow menu is a floating
+ * overlay, so it must not push the surrounding topbar icons around when it
+ * opens or closes.
+ */
+function OverflowDropdown({ children }: React.PropsWithChildren) {
+	const location = useLocation();
+
+	assert(location.type === 'icon', 'Overflow dropdown must be rendered under an icon');
+
+	return (
+		<LocationContext.Provider
+			value={{
+				type: 'icon',
+				isVisible: location.isVisible,
+				isUnderDropdown: location.isUnderDropdown,
+				width: location.width,
+				setAnimationState: location.setAnimationState,
+				setContentSize: location.setContentSize,
+				setDropdownSize: () => {},
+			}}
+		>
+			<Dropdown>{children}</Dropdown>
+		</LocationContext.Provider>
 	);
 }
