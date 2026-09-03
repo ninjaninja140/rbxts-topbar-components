@@ -321,12 +321,14 @@ export function Icon(componentProps: IconProps) {
 		>
 			<frame
 				Size={wrapSize}
+				AutomaticSize={Enum.AutomaticSize.X}
 				LayoutOrder={stateful(props.layoutOrder, currentState)}
 				Position={mapBinding(hoverLift, (t) => new UDim2(0, 0, 0, -t * stylesheet.animation.hoverLift))}
 				BackgroundTransparency={1}
 			>
 				<textbutton
 					Size={new UDim2(1, 0, 0, iconSize.Y)}
+					AutomaticSize={Enum.AutomaticSize.X}
 					Active={!props.static}
 					Selectable={!props.static}
 					AutoButtonColor={!props.static}
